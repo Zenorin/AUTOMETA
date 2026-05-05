@@ -1,0 +1,7 @@
+interface:
+  display_name: "Project Reference Mapper"
+  short_description: "Map uploaded Bulsaja/Electron/Next reference package into clean-room route, role, IPC/message, collector, and contract evidence before implementation."
+  default_prompt: "$project-reference-mapper"
+
+policy:
+  allow_implicit_invocation: true

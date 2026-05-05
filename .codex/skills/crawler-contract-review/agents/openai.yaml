@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crawler Contract Review"
+  short_description: "Review crawler selectors, headers, fallback paths, return schema, errors, and rate/ban signals."
+  default_prompt: "$crawler-contract-review"
+
+policy:
+  allow_implicit_invocation: true

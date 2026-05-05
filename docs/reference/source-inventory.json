@@ -1,0 +1,191 @@
+{
+  "created_at_kst": "2026-05-05 19:26:05 KST",
+  "source_files": {
+    "app.zip": "1e3b5bd1959a9aeaf366bdabf575d5429bcccc086f70bbe658f39e656b3b8fe2",
+    "package.json": "f2bc55c5f873e1c799c2a44ae24e77c81cb111c78d46e1b7314069b16e0b12ea",
+    "folder-structure.filtered.md": "c615b94a1cff19219546e8edc82fc7ecb880b867229039111143f7036ec62152",
+    "folder-structure.md": "7682f95438e601a45f4ba3292184b54bc8e198e1735b5df9b9798c1fe9ac03b5",
+    "library-references.md": "01935ba0e4490e743c894a9e8dd436a8361f38d69de9ddb39364fab54865c96a",
+    "node_modules-top-level.md": "207c77a0e92d532b9667848093bc4285a6165b451a7653550490db07f0c4b219"
+  },
+  "app_zip": {
+    "entries": 455,
+    "zip_integrity": "PASS"
+  },
+  "package": {
+    "name": "bulsaja",
+    "version": "0.12.53",
+    "main": "app/background.js",
+    "dependency_count": 94,
+    "selected_dependency_groups": {
+      "runtime_shell": {
+        "electron-serve": "^1.3.0",
+        "electron-store": "^8.2.0",
+        "electron-updater": "^6.2.1",
+        "electron-is-dev": "^3.0.1"
+      },
+      "network_crawl": {
+        "axios": "^1.7.2",
+        "axios-retry": "^4.4.1",
+        "cheerio": "^1.0.0-rc.12",
+        "jsdom": "^24.1.3",
+        "puppeteer": "^24.10.1",
+        "iconv-lite": "^0.6.3",
+        "querystring": "^0.2.1"
+      },
+      "commerce_data": {
+        "xlsx": "^0.18.5",
+        "exceljs": "^4.4.0",
+        "ag-grid-community": "31.1.1",
+        "ag-grid-enterprise": "31.1.1",
+        "ag-grid-react": "31.1.1",
+        "recharts": "^2.12.7"
+      },
+      "auth_cloud_payment": {
+        "firebase": "^10.12.3",
+        "googleapis": "^144.0.0",
+        "google-spreadsheet": "^4.1.4",
+        "@tosspayments/payment-sdk": "^1.7.1",
+        "bcryptjs": "^2.4.3"
+      },
+      "ui": {
+        "@radix-ui/react-dialog": "^1.1.1",
+        "@radix-ui/react-select": "^2.1.1",
+        "framer-motion": "^11.18.2",
+        "lucide-react": "^0.400.0",
+        "tinymce": "^7.3.0",
+        "@tinymce/tinymce-react": "^5.1.1",
+        "zustand": "^4.5.2",
+        "zod": "^4.1.13"
+      }
+    }
+  },
+  "sourcemap_recovery": {
+    "background_total_sources": 730,
+    "background_written": 730,
+    "preload_total_sources": 5,
+    "preload_written": 5
+  },
+  "route_inventory": {
+    "root_pages": [
+      "index.html",
+      "dashboard.html",
+      "download.html",
+      "electron.html",
+      "mypage.html",
+      "policy.html"
+    ],
+    "auth": [
+      "local.html",
+      "login.html",
+      "password-reset.html",
+      "register-local.html",
+      "register.html"
+    ],
+    "products": [
+      "adkeyword.html",
+      "coupangreview.html",
+      "detailkeyword.html",
+      "keyword-detail.html",
+      "keyword-folder.html",
+      "keyword.html",
+      "productname.html",
+      "purchase.html",
+      "recommend.html"
+    ],
+    "products_admanage": [
+      "coupang.html",
+      "coupang-cost.html",
+      "coupang-sales.html",
+      "coupang-settlement.html"
+    ],
+    "products_manage": [
+      "alibomber.html",
+      "analytics.html",
+      "bulsaSourcing.html",
+      "buyorder.html",
+      "list.html",
+      "productRank.html",
+      "sourcingSites.html",
+      "trash.html"
+    ],
+    "settings": [
+      "aiapikey.html",
+      "collection.html",
+      "filter-words.html",
+      "markets.html",
+      "orderaccount.html"
+    ]
+  },
+  "reference_source_file_inventory": {
+    "crawler": [
+      "aiProductName.ts",
+      "aliexpress.ts",
+      "auction.ts",
+      "coupang.ts",
+      "coupangAdExceldownloadData.ts",
+      "coupangGetProductReview.ts",
+      "coupangSettlementDownloader.ts",
+      "coupangSettlementProcessor.ts",
+      "coupangV2.ts",
+      "coupangWingAdData.ts",
+      "coupangWingAdLogin.ts",
+      "coupangWingData.ts",
+      "gmarket.ts",
+      "naver.ts",
+      "naverAdApi.ts",
+      "naverInsight.ts",
+      "naverKeywordAnalyzer.ts",
+      "naverNs.ts",
+      "pandarank.ts",
+      "seller.ts",
+      "smartstore-api.ts",
+      "taobao.ts",
+      "util.ts"
+    ],
+    "lib": [
+      "admin-state.ts",
+      "aliexpressImageSearch.ts",
+      "batch-keyword.ts",
+      "bulsa-sourcing.ts",
+      "combination.ts",
+      "customAxios.ts",
+      "customerror.ts",
+      "errorlog.ts",
+      "itemscout.ts",
+      "opensearch.ts",
+      "oxylabs.ts",
+      "priceUtils.ts",
+      "processKeyword.ts",
+      "taobaoImageSearch.ts",
+      "user.ts",
+      "util.ts",
+      "webScraping.ts"
+    ],
+    "ipc": [
+      "coupang-ad-handler.ts",
+      "coupang-sales-handler.ts",
+      "smartstore-browser-manager.ts",
+      "smartstore-editor-handler.ts",
+      "smartstore-handler.ts",
+      "taobao-option-handler.ts"
+    ],
+    "preload": [
+      "preload.ts"
+    ]
+  },
+  "clean_room_policy": {
+    "copy_reference_source": false,
+    "copy_assets_or_branding": false,
+    "reference_use": "roles, contracts, DTO shapes, failure modes, event names, route inventory, test fixtures only"
+  },
+  "target_mapping": {
+    "apps/web": "commerce workspace route shells and UI states",
+    "apps/api": "FastAPI job, product, keyword, ad/report, settings, and account-boundary APIs",
+    "apps/extension": "Chrome MV3 user-controlled collection bridge",
+    "packages/contracts": "shared DTO, event, API, and message schemas",
+    "packages/core": "deterministic normalization, ranking, keyword, recommendation, import/export pipeline logic",
+    "packages/collectors": "market-specific collectors and adapters",
+    "tools/reference-analysis": "clean-room reports, fixture extraction, and source-copy audit evidence"
+  }
+}

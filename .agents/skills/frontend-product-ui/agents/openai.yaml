@@ -1,0 +1,7 @@
+interface:
+  display_name: "Frontend Product Ui"
+  short_description: "Design and implement polished, reusable, accessible product UI without dropping states or behavior."
+  default_prompt: "$frontend-product-ui"
+
+policy:
+  allow_implicit_invocation: true

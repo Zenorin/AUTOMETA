@@ -1,0 +1,7 @@
+interface:
+  display_name: "Anti Bot Compliance Check"
+  short_description: "Check that automation respects access controls, CAPTCHA boundaries, and allowed use."
+  default_prompt: "$anti-bot-compliance-check"
+
+policy:
+  allow_implicit_invocation: true

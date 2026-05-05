@@ -1,0 +1,296 @@
+{
+  "version": "4.9.5-dev-ops-r1",
+  "items": [
+    {
+      "id": "WBS-00",
+      "order": 0,
+      "phase": "intake",
+      "title": "Confirm scope, secret boundary, and clean-room constraints",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "project-development-bootstrap"
+      ],
+      "target_files": [
+        "AGENTS.md",
+        "docs/architecture/boundaries.md"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-generated --root ."
+      ],
+      "depends_on": [],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-01",
+      "order": 1,
+      "phase": "stack-decision",
+      "title": "Review and approve stack decision",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "project-development-bootstrap"
+      ],
+      "target_files": [
+        "docs/decisions/stack-decision.md"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root ."
+      ],
+      "depends_on": [
+        "WBS-00"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-02",
+      "order": 2,
+      "phase": "bootstrap",
+      "title": "Generate and validate repository scaffold",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "project-development-bootstrap"
+      ],
+      "target_files": [
+        "package.json",
+        "pnpm-workspace.yaml",
+        ".codex/scaffold-manifest.json"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-scaffold --root ."
+      ],
+      "depends_on": [
+        "WBS-01"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-03",
+      "order": 3,
+      "phase": "reference-analysis",
+      "title": "Write clean-room reference role report before implementation",
+      "workstream": "project-reference-mapper",
+      "module_path": "tools/reference-analysis",
+      "suggested_skills": [
+        "project-reference-mapper",
+        "clean-room-reference-analysis",
+        "reference-role-report",
+        "source-copy-audit"
+      ],
+      "target_files": [
+        "tools/reference-analysis/src/index.ts",
+        "docs/reference/reference-role-report.md"
+      ],
+      "validation_commands": [
+        "pnpm cleanroom:audit"
+      ],
+      "depends_on": [
+        "WBS-02"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-04",
+      "order": 4,
+      "phase": "contracts",
+      "title": "Define shared DTO/schema contracts",
+      "workstream": "project-contracts",
+      "module_path": "packages/contracts",
+      "suggested_skills": [
+        "project-contracts"
+      ],
+      "target_files": [
+        "packages/contracts/src/index.ts",
+        "docs/contracts/api-contracts.md"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/contracts typecheck"
+      ],
+      "depends_on": [
+        "WBS-03"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-05",
+      "order": 5,
+      "phase": "backend-api",
+      "title": "Implement API shell, health route, and error envelope",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "api-contract-change"
+      ],
+      "target_files": [
+        "apps/api/app/main.py",
+        "apps/api/tests/test_health.py"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest"
+      ],
+      "depends_on": [
+        "WBS-04"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-06",
+      "order": 6,
+      "phase": "frontend-shell",
+      "title": "Implement web route shell and complete UI states",
+      "workstream": "project-frontend-design",
+      "module_path": "apps/web",
+      "suggested_skills": [
+        "project-frontend-design",
+        "frontend-product-ui"
+      ],
+      "target_files": [
+        "apps/web/src/App.tsx"
+      ],
+      "validation_commands": [
+        "pnpm --filter web build"
+      ],
+      "depends_on": [
+        "WBS-05"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-07",
+      "order": 7,
+      "phase": "extension-bridge",
+      "title": "Implement extension manifest and message boundary",
+      "workstream": "project-extension-bridge",
+      "module_path": "apps/extension",
+      "suggested_skills": [
+        "project-extension-bridge",
+        "privacy-boundary-review"
+      ],
+      "target_files": [
+        "apps/extension/manifest.json",
+        "apps/extension/src/background.ts"
+      ],
+      "validation_commands": [
+        "pnpm --filter extension build"
+      ],
+      "depends_on": [
+        "WBS-06"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-08",
+      "order": 8,
+      "phase": "collectors",
+      "title": "Define collector contract and raw/normalized split",
+      "workstream": "project-market-collectors",
+      "module_path": "packages/collectors",
+      "suggested_skills": [
+        "project-market-collectors",
+        "crawler-contract-review"
+      ],
+      "target_files": [
+        "packages/collectors/src/index.ts"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/collectors typecheck"
+      ],
+      "depends_on": [
+        "WBS-07"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-09",
+      "order": 9,
+      "phase": "core-pipeline",
+      "title": "Implement deterministic core pipeline skeleton",
+      "workstream": "project-core-pipeline",
+      "module_path": "packages/core",
+      "suggested_skills": [
+        "project-core-pipeline"
+      ],
+      "target_files": [
+        "packages/core/src/index.ts"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/core typecheck"
+      ],
+      "depends_on": [
+        "WBS-08"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-10",
+      "order": 10,
+      "phase": "integration",
+      "title": "Connect contracts, API, web, extension, collectors, and core with smoke evidence",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "evidence-pack"
+      ],
+      "target_files": [
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md"
+      ],
+      "validation_commands": [
+        "pnpm validate:all"
+      ],
+      "depends_on": [
+        "WBS-09"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-11",
+      "order": 11,
+      "phase": "handoff",
+      "title": "Prepare evidence pack and next-session handoff",
+      "workstream": "evidence-pack",
+      "module_path": ".",
+      "suggested_skills": [
+        "evidence-pack"
+      ],
+      "target_files": [
+        "PLANS.md",
+        "docs/planning/codex-command-queue.md"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root ."
+      ],
+      "depends_on": [
+        "WBS-10"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
+      "status": "todo"
+    }
+  ]
+}

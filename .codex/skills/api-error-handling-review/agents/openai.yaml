@@ -1,0 +1,7 @@
+interface:
+  display_name: "Api Error Handling Review"
+  short_description: "Review status codes, error envelopes, validation errors, retries, and client-facing failure semantics."
+  default_prompt: "$api-error-handling-review"
+
+policy:
+  allow_implicit_invocation: true

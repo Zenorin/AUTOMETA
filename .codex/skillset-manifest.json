@@ -1,0 +1,424 @@
+{
+  "version": "4.9.5-dev-ops-r1",
+  "skills": [
+    "using-agent-skills",
+    "spec-driven-development",
+    "planning-and-task-breakdown",
+    "context-engineering",
+    "source-driven-development",
+    "incremental-implementation",
+    "test-driven-development",
+    "debugging-and-error-recovery",
+    "code-review-and-quality",
+    "security-and-hardening",
+    "consistency-guard",
+    "evidence-pack",
+    "clean-room-reference-analysis",
+    "reference-role-report",
+    "contract-extraction",
+    "source-copy-audit",
+    "no-feature-deletion-guard",
+    "pass-manifest-verification",
+    "characterization-tests",
+    "privacy-boundary-review",
+    "data-egress-review",
+    "project-development-bootstrap",
+    "project-frontend-design",
+    "project-backend-api",
+    "project-contracts",
+    "project-core-pipeline",
+    "project-extension-bridge",
+    "project-market-collectors",
+    "project-reference-mapper",
+    "authz-security-review",
+    "session-boundary-security",
+    "api-contract-change",
+    "crawler-contract-review",
+    "content-script-boundary",
+    "anti-bot-compliance-check",
+    "frontend-product-ui",
+    "api-error-handling-review",
+    "backend-test-matrix"
+  ],
+  "optional_skills": [
+    "extension-permission-review",
+    "schema-contract-check",
+    "message-contract-review",
+    "db-migration",
+    "service-repository-boundary-check",
+    "ui-state-coverage",
+    "data-quality-gate",
+    "browser-smoke",
+    "idempotency-check",
+    "documentation-and-adrs",
+    "observability-update",
+    "ui-a11y-check",
+    "backward-compat-check",
+    "design-system-consistency",
+    "responsive-layout-review",
+    "backfill-rollout",
+    "accessibility-check",
+    "form-table-filter-ux",
+    "visual-regression-plan",
+    "incident-hotfix"
+  ],
+  "budget": {
+    "max_project_skills": 38,
+    "max_initial_metadata_chars": 8600,
+    "estimated_initial_metadata_chars": 7577,
+    "selected_count": 38,
+    "optional_count": 20
+  },
+  "scale_options": {
+    "description": "Team-owned product with multiple module boundaries.",
+    "max_project_skills": 28,
+    "max_module_skills": 8,
+    "max_initial_metadata_chars": 7200,
+    "include_commands": true,
+    "include_references": true,
+    "include_personas": true,
+    "include_governance": true
+  },
+  "workstreams": [
+    {
+      "skill": "project-development-bootstrap",
+      "name": "Project Development Bootstrap",
+      "module_paths": [
+        "."
+      ],
+      "objective": "Create and validate AUTOMETA repo bootstrap, workspace, env template, planning docs, and shared build scripts without overriding module routing."
+    },
+    {
+      "skill": "project-frontend-design",
+      "name": "Project Frontend Design",
+      "module_paths": [
+        "apps/web"
+      ],
+      "objective": "Own commerce workspace UI route shell, table/form/editor states, responsive layout, and Korean UX copy."
+    },
+    {
+      "skill": "project-backend-api",
+      "name": "Project Backend API",
+      "module_paths": [
+        "apps/api"
+      ],
+      "objective": "Own FastAPI service boundary, stable envelopes, job/progress/cancel APIs, persistence boundaries, and backend test matrix."
+    },
+    {
+      "skill": "project-contracts",
+      "name": "Project Contracts",
+      "module_paths": [
+        "packages/contracts"
+      ],
+      "objective": "Own shared DTO/schema/event contracts and compatibility notes."
+    },
+    {
+      "skill": "project-core-pipeline",
+      "name": "Project Core Pipeline",
+      "module_paths": [
+        "packages/core"
+      ],
+      "objective": "Own deterministic core processing, pipeline state, and idempotent execution contracts."
+    },
+    {
+      "skill": "project-extension-bridge",
+      "name": "Project Extension Bridge",
+      "module_paths": [
+        "apps/extension"
+      ],
+      "objective": "Own extension permissions, message contracts, content/background boundaries, and privacy review."
+    },
+    {
+      "skill": "project-market-collectors",
+      "name": "Project Market Collectors",
+      "module_paths": [
+        "packages/collectors"
+      ],
+      "objective": "Own commerce market collectors, browser/session boundaries, progress/cancel semantics, and normalized output contracts."
+    },
+    {
+      "skill": "project-reference-mapper",
+      "name": "Project Reference Mapper",
+      "module_paths": [
+        "tools/reference-analysis"
+      ],
+      "objective": "Map uploaded Bulsaja/Electron/Next reference package into clean-room route, role, IPC/message, collector, and contract evidence before implementation."
+    }
+  ],
+  "scaffold": {
+    "package_manager": "pnpm",
+    "runtime_stack": {
+      "frontend": "react-vite-typescript",
+      "api": "fastapi-python",
+      "extension": "chrome-mv3-typescript"
+    },
+    "generate_project_scaffold": true,
+    "dev_modules": [
+      {
+        "name": "web",
+        "path": "apps/web",
+        "kind": "app",
+        "entrypoints": [
+          "package.json",
+          "index.html",
+          "src/main.tsx"
+        ]
+      },
+      {
+        "name": "api",
+        "path": "apps/api",
+        "kind": "api",
+        "entrypoints": [
+          "pyproject.toml",
+          "app/main.py"
+        ]
+      },
+      {
+        "name": "extension",
+        "path": "apps/extension",
+        "kind": "extension",
+        "entrypoints": [
+          "package.json",
+          "manifest.json",
+          "src/background.ts"
+        ]
+      },
+      {
+        "name": "contracts",
+        "path": "packages/contracts",
+        "kind": "package",
+        "entrypoints": [
+          "package.json",
+          "src/index.ts"
+        ]
+      },
+      {
+        "name": "core",
+        "path": "packages/core",
+        "kind": "package",
+        "entrypoints": [
+          "package.json",
+          "src/index.ts"
+        ]
+      },
+      {
+        "name": "collectors",
+        "path": "packages/collectors",
+        "kind": "package",
+        "entrypoints": [
+          "package.json",
+          "src/index.ts"
+        ]
+      },
+      {
+        "name": "reference-analysis",
+        "path": "tools/reference-analysis",
+        "kind": "tool",
+        "entrypoints": [
+          "package.json",
+          "src/index.ts"
+        ]
+      }
+    ]
+  },
+  "stack_decision": {
+    "mode": "decision-first",
+    "required": true,
+    "selected_stack": {
+      "frontend": "react-vite-typescript",
+      "api": "fastapi-python",
+      "extension": "chrome-mv3-typescript",
+      "package_manager": "pnpm"
+    },
+    "scaffold_generation_policy": "blocked_until_stack_selected",
+    "reason": "Selected React/Vite TypeScript web app, FastAPI Python API, Chrome MV3 extension, shared TypeScript contracts/core/collectors, and pnpm workspace for a clean-room web-first rebuild of the uploaded Electron/Next reference package. Electron is reference-only and not selected for the target runtime unless a later explicit stack decision changes it."
+  },
+  "modules": [
+    {
+      "name": "web",
+      "path": "apps/web",
+      "skills": [
+        "project-frontend-design",
+        "frontend-product-ui",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "design-system-consistency",
+        "ui-state-coverage",
+        "responsive-layout-review",
+        "browser-smoke",
+        "accessibility-check",
+        "form-table-filter-ux",
+        "visual-regression-plan"
+      ],
+      "workstreams": [
+        "project-frontend-design"
+      ],
+      "budget": {
+        "max_module_skills": 8,
+        "max_initial_metadata_chars": 3600,
+        "estimated_initial_metadata_chars": 778,
+        "selected_count": 4,
+        "optional_count": 7
+      }
+    },
+    {
+      "name": "api",
+      "path": "apps/api",
+      "skills": [
+        "project-backend-api",
+        "api-contract-change",
+        "api-error-handling-review",
+        "backend-test-matrix",
+        "authz-security-review",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "service-repository-boundary-check",
+        "db-migration",
+        "observability-update",
+        "backward-compat-check",
+        "incident-hotfix"
+      ],
+      "workstreams": [
+        "project-backend-api"
+      ],
+      "budget": {
+        "max_module_skills": 8,
+        "max_initial_metadata_chars": 3600,
+        "estimated_initial_metadata_chars": 1369,
+        "selected_count": 7,
+        "optional_count": 5
+      }
+    },
+    {
+      "name": "extension",
+      "path": "apps/extension",
+      "skills": [
+        "project-extension-bridge",
+        "content-script-boundary",
+        "privacy-boundary-review",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "extension-permission-review",
+        "message-contract-review",
+        "browser-smoke"
+      ],
+      "workstreams": [
+        "project-extension-bridge"
+      ],
+      "budget": {
+        "max_module_skills": 8,
+        "max_initial_metadata_chars": 3600,
+        "estimated_initial_metadata_chars": 968,
+        "selected_count": 5,
+        "optional_count": 3
+      }
+    },
+    {
+      "name": "contracts",
+      "path": "packages/contracts",
+      "skills": [
+        "project-contracts",
+        "api-contract-change",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "backward-compat-check",
+        "documentation-and-adrs"
+      ],
+      "workstreams": [
+        "project-contracts"
+      ],
+      "budget": {
+        "max_module_skills": 8,
+        "max_initial_metadata_chars": 3600,
+        "estimated_initial_metadata_chars": 738,
+        "selected_count": 4,
+        "optional_count": 2
+      }
+    },
+    {
+      "name": "core",
+      "path": "packages/core",
+      "skills": [
+        "project-core-pipeline",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "schema-contract-check",
+        "data-quality-gate",
+        "idempotency-check",
+        "observability-update",
+        "backfill-rollout"
+      ],
+      "workstreams": [
+        "project-core-pipeline"
+      ],
+      "budget": {
+        "max_module_skills": 8,
+        "max_initial_metadata_chars": 3600,
+        "estimated_initial_metadata_chars": 563,
+        "selected_count": 3,
+        "optional_count": 5
+      }
+    },
+    {
+      "name": "collectors",
+      "path": "packages/collectors",
+      "skills": [
+        "project-market-collectors",
+        "crawler-contract-review",
+        "session-boundary-security",
+        "anti-bot-compliance-check",
+        "consistency-guard",
+        "evidence-pack",
+        "privacy-boundary-review"
+      ],
+      "optional_skills": [
+        "idempotency-check"
+      ],
+      "workstreams": [
+        "project-market-collectors"
+      ],
+      "budget": {
+        "max_module_skills": 8,
+        "max_initial_metadata_chars": 3600,
+        "estimated_initial_metadata_chars": 1406,
+        "selected_count": 7,
+        "optional_count": 1
+      }
+    },
+    {
+      "name": "reference-analysis",
+      "path": "tools/reference-analysis",
+      "skills": [
+        "project-reference-mapper",
+        "clean-room-reference-analysis",
+        "reference-role-report",
+        "contract-extraction",
+        "source-copy-audit",
+        "consistency-guard",
+        "evidence-pack",
+        "no-feature-deletion-guard"
+      ],
+      "optional_skills": [],
+      "workstreams": [
+        "project-reference-mapper"
+      ],
+      "budget": {
+        "max_module_skills": 8,
+        "max_initial_metadata_chars": 3600,
+        "estimated_initial_metadata_chars": 1593,
+        "selected_count": 8,
+        "optional_count": 0
+      }
+    }
+  ]
+}

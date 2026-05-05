@@ -1,0 +1,234 @@
+{
+  "project_type": "web-clean-room-workstreams",
+  "project_size": "large",
+  "scale_options": {
+    "description": "Team-owned product with multiple module boundaries.",
+    "max_project_skills": 28,
+    "max_module_skills": 8,
+    "max_initial_metadata_chars": 7200,
+    "include_commands": true,
+    "include_references": true,
+    "include_personas": true,
+    "include_governance": true
+  },
+  "policy_packs": [
+    "clean-room",
+    "no-feature-deletion",
+    "privacy-boundary"
+  ],
+  "budget": {
+    "max_project_skills": 38,
+    "max_initial_metadata_chars": 8600,
+    "estimated_initial_metadata_chars": 7577,
+    "selected_count": 38,
+    "optional_count": 20
+  },
+  "skills": [
+    "using-agent-skills",
+    "spec-driven-development",
+    "planning-and-task-breakdown",
+    "context-engineering",
+    "source-driven-development",
+    "incremental-implementation",
+    "test-driven-development",
+    "debugging-and-error-recovery",
+    "code-review-and-quality",
+    "security-and-hardening",
+    "consistency-guard",
+    "evidence-pack",
+    "clean-room-reference-analysis",
+    "reference-role-report",
+    "contract-extraction",
+    "source-copy-audit",
+    "no-feature-deletion-guard",
+    "pass-manifest-verification",
+    "characterization-tests",
+    "privacy-boundary-review",
+    "data-egress-review",
+    "project-development-bootstrap",
+    "project-frontend-design",
+    "project-backend-api",
+    "project-contracts",
+    "project-core-pipeline",
+    "project-extension-bridge",
+    "project-market-collectors",
+    "project-reference-mapper",
+    "authz-security-review",
+    "session-boundary-security",
+    "api-contract-change",
+    "crawler-contract-review",
+    "content-script-boundary",
+    "anti-bot-compliance-check",
+    "frontend-product-ui",
+    "api-error-handling-review",
+    "backend-test-matrix"
+  ],
+  "optional_skills": [
+    "extension-permission-review",
+    "schema-contract-check",
+    "message-contract-review",
+    "db-migration",
+    "service-repository-boundary-check",
+    "ui-state-coverage",
+    "data-quality-gate",
+    "browser-smoke",
+    "idempotency-check",
+    "documentation-and-adrs",
+    "observability-update",
+    "ui-a11y-check",
+    "backward-compat-check",
+    "design-system-consistency",
+    "responsive-layout-review",
+    "backfill-rollout",
+    "accessibility-check",
+    "form-table-filter-ux",
+    "visual-regression-plan",
+    "incident-hotfix"
+  ],
+  "modules": [
+    {
+      "name": "web",
+      "path": "apps/web",
+      "module_type": "frontend-product-ui",
+      "skills": [
+        "project-frontend-design",
+        "frontend-product-ui",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "design-system-consistency",
+        "ui-state-coverage",
+        "responsive-layout-review",
+        "browser-smoke",
+        "accessibility-check",
+        "form-table-filter-ux",
+        "visual-regression-plan"
+      ],
+      "workstreams": [
+        "project-frontend-design"
+      ]
+    },
+    {
+      "name": "api",
+      "path": "apps/api",
+      "module_type": "backend-api",
+      "skills": [
+        "project-backend-api",
+        "api-contract-change",
+        "api-error-handling-review",
+        "backend-test-matrix",
+        "authz-security-review",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "service-repository-boundary-check",
+        "db-migration",
+        "observability-update",
+        "backward-compat-check",
+        "incident-hotfix"
+      ],
+      "workstreams": [
+        "project-backend-api"
+      ]
+    },
+    {
+      "name": "extension",
+      "path": "apps/extension",
+      "module_type": "browser-extension",
+      "skills": [
+        "project-extension-bridge",
+        "content-script-boundary",
+        "privacy-boundary-review",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "extension-permission-review",
+        "message-contract-review",
+        "browser-smoke"
+      ],
+      "workstreams": [
+        "project-extension-bridge"
+      ]
+    },
+    {
+      "name": "contracts",
+      "path": "packages/contracts",
+      "module_type": "shared-contracts",
+      "skills": [
+        "project-contracts",
+        "api-contract-change",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "backward-compat-check",
+        "documentation-and-adrs"
+      ],
+      "workstreams": [
+        "project-contracts"
+      ]
+    },
+    {
+      "name": "core",
+      "path": "packages/core",
+      "module_type": "data-pipeline",
+      "skills": [
+        "project-core-pipeline",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "optional_skills": [
+        "schema-contract-check",
+        "data-quality-gate",
+        "idempotency-check",
+        "observability-update",
+        "backfill-rollout"
+      ],
+      "workstreams": [
+        "project-core-pipeline"
+      ]
+    },
+    {
+      "name": "collectors",
+      "path": "packages/collectors",
+      "module_type": "crawler-session",
+      "skills": [
+        "project-market-collectors",
+        "crawler-contract-review",
+        "session-boundary-security",
+        "anti-bot-compliance-check",
+        "consistency-guard",
+        "evidence-pack",
+        "privacy-boundary-review"
+      ],
+      "optional_skills": [
+        "idempotency-check"
+      ],
+      "workstreams": [
+        "project-market-collectors"
+      ]
+    },
+    {
+      "name": "reference-analysis",
+      "path": "tools/reference-analysis",
+      "module_type": "clean-room-rebuild",
+      "skills": [
+        "project-reference-mapper",
+        "clean-room-reference-analysis",
+        "reference-role-report",
+        "contract-extraction",
+        "source-copy-audit",
+        "consistency-guard",
+        "evidence-pack",
+        "no-feature-deletion-guard"
+      ],
+      "optional_skills": [],
+      "workstreams": [
+        "project-reference-mapper"
+      ]
+    }
+  ]
+}

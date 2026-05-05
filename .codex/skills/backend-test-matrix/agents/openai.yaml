@@ -1,0 +1,7 @@
+interface:
+  display_name: "Backend Test Matrix"
+  short_description: "Choose backend unit, integration, contract, migration, auth, and regression tests for the change."
+  default_prompt: "$backend-test-matrix"
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Content Script Boundary"
+  short_description: "Keep content script, page context, background, and UI boundaries explicit."
+  default_prompt: "$content-script-boundary"
+
+policy:
+  allow_implicit_invocation: true

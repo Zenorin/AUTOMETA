@@ -1,0 +1,7 @@
+interface:
+  display_name: "Project Frontend Design"
+  short_description: "Own commerce workspace UI route shell, table/form/editor states, responsive layout, and Korean UX copy."
+  default_prompt: "$project-frontend-design"
+
+policy:
+  allow_implicit_invocation: true

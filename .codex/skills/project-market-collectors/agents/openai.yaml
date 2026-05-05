@@ -1,0 +1,7 @@
+interface:
+  display_name: "Project Market Collectors"
+  short_description: "Own commerce market collectors, browser/session boundaries, progress/cancel semantics, and normalized output contracts."
+  default_prompt: "$project-market-collectors"
+
+policy:
+  allow_implicit_invocation: true

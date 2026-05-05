@@ -1,0 +1,7 @@
+interface:
+  display_name: "Project Backend API"
+  short_description: "Own FastAPI service boundary, stable envelopes, job/progress/cancel APIs, persistence boundaries, and backend test matrix."
+  default_prompt: "$project-backend-api"
+
+policy:
+  allow_implicit_invocation: true

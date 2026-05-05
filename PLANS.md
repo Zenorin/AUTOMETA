@@ -1,4 +1,4 @@
-# PLANS.md — AUTOMETA Web Clean-Room Sourcing Platform
+# PLANS.md — AUTOMETA Bulsaja Clean Room Rebuild
 
 Use this file for ambiguous or multi-step work.
 
