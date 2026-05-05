@@ -21,7 +21,11 @@
       "depends_on": [],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Scope, secret boundary, and clean-room constraints confirmed.",
+        "validation": "python -S tools/codex/codex_skillset_generator.py validate-generated --root . PASS"
+      }
     },
     {
       "id": "WBS-01",
@@ -44,7 +48,14 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Stack decision reviewed and approved.",
+        "validation": "python -S tools/codex/codex_skillset_generator.py validate-planning --root . PASS",
+        "changed_files": [
+          "docs/decisions/stack-decision.md"
+        ]
+      }
     },
     {
       "id": "WBS-02",
