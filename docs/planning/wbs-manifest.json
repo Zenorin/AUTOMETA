@@ -80,7 +80,16 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Repository scaffold generated and validated.",
+        "validation": "python -S tools/codex/validate_scaffold.py --root . PASS",
+        "changed_files": [
+          "package.json",
+          "pnpm-workspace.yaml",
+          ".codex/scaffold-manifest.json"
+        ]
+      }
     },
     {
       "id": "WBS-03",
@@ -107,7 +116,16 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Clean-room reference role report completed before implementation.",
+        "validation": "pnpm cleanroom:audit PASS",
+        "changed_files": [
+          "tools/reference-analysis/src/index.ts",
+          "docs/reference/reference-role-report.md",
+          "docs/planning/wbs-manifest.json"
+        ]
+      }
     },
     {
       "id": "WBS-04",
@@ -131,7 +149,15 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Shared DTO/schema contracts defined and validated.",
+        "validation": "pnpm --filter @project/contracts typecheck PASS",
+        "changed_files": [
+          "packages/contracts/src/index.ts",
+          "docs/contracts/api-contracts.md"
+        ]
+      }
     },
     {
       "id": "WBS-05",
