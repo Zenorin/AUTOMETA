@@ -1,15 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Project Extension",
+  "name": "AUTOMETA Extension Scaffold",
+  "description": "Typed local MV3 message bridge scaffold; no crawling, login, cookie, or credential access.",
   "version": "0.1.0",
-  "permissions": [
-    "storage"
-  ],
+  "permissions": [],
   "background": {
     "service_worker": "dist/background.js",
     "type": "module"
   },
   "action": {
-    "default_title": "Project Extension"
+    "default_title": "AUTOMETA"
   }
 }
