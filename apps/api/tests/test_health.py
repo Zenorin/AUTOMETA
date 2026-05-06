@@ -33,6 +33,16 @@ def test_health_returns_success_envelope() -> None:
     assert any(route.path == "/health" for route in app.routes)
 
 
+def test_health_generates_correlation_id_when_missing() -> None:
+    request = _RequestStub({})
+    response = Response()
+
+    body = health(request, response)
+
+    assert response.headers[CORRELATION_ID_HEADER]
+    assert body["meta"]["correlationId"] == response.headers[CORRELATION_ID_HEADER]
+
+
 def test_not_found_returns_error_envelope() -> None:
     request = _RequestStub({CORRELATION_ID_HEADER: "missing-correlation"})
 

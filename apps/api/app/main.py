@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal, TypeAlias, TypedDict
 from uuid import uuid4
 
 from fastapi import FastAPI, Request, Response
@@ -12,7 +12,62 @@ CORRELATION_ID_HEADER = "X-Correlation-ID"
 
 app = FastAPI(title="AUTOMETA API")
 
-STATUS_TO_ERROR_CODE = {
+ApiErrorCode = Literal[
+    "bad-request",
+    "unauthorized",
+    "forbidden",
+    "not-found",
+    "conflict",
+    "validation-failed",
+    "rate-limited",
+    "cancelled",
+    "upstream-failed",
+    "internal",
+]
+
+FieldErrorIssue = Literal["missing", "invalid", "unsupported"]
+
+
+class FieldErrorDetail(TypedDict):
+    kind: Literal["field"]
+    field: str
+    issue: FieldErrorIssue
+
+
+ErrorDetail: TypeAlias = FieldErrorDetail
+
+
+class ApiResponseMeta(TypedDict):
+    schemaVersion: str
+    correlationId: str
+    emittedAt: str
+
+
+class ErrorEnvelope(TypedDict):
+    kind: Literal["error-envelope"]
+    schemaVersion: str
+    code: ApiErrorCode
+    message: str
+    correlationId: str
+    retryable: bool
+    details: list[ErrorDetail]
+
+
+class SuccessResponseEnvelope(TypedDict):
+    kind: Literal["api-response"]
+    ok: Literal[True]
+    data: dict[str, Any]
+    meta: ApiResponseMeta
+
+
+class ErrorResponseEnvelope(TypedDict):
+    kind: Literal["api-response"]
+    ok: Literal[False]
+    error: ErrorEnvelope
+    meta: ApiResponseMeta
+
+
+STATUS_TO_ERROR_CODE: dict[int, ApiErrorCode] = {
     400: "bad-request",
     401: "unauthorized",
     403: "forbidden",
@@ -31,7 +86,7 @@ def _correlation_id(request: Request) -> str:
     return request.headers.get(CORRELATION_ID_HEADER) or str(uuid4())
 
 
-def _meta(correlation_id: str) -> dict[str, str]:
+def _meta(correlation_id: str) -> ApiResponseMeta:
     return {
         "schemaVersion": SCHEMA_VERSION,
         "correlationId": correlation_id,
@@ -39,7 +94,7 @@ def _meta(correlation_id: str) -> dict[str, str]:
     }
 
 
-def _success_response(data: dict[str, Any], correlation_id: str) -> dict[str, Any]:
+def _success_response(data: dict[str, Any], correlation_id: str) -> SuccessResponseEnvelope:
     return {
         "kind": "api-response",
         "ok": True,
@@ -51,13 +106,13 @@ def _success_response(data: dict[str, Any], correlation_id: str) -> dict[str, An
 def _error_response(
     *,
     status_code: int,
-    code: str,
+    code: ApiErrorCode,
     message: str,
     correlation_id: str,
     retryable: bool = False,
-    details: list[dict[str, Any]] | None = None,
+    details: list[ErrorDetail] | None = None,
 ) -> JSONResponse:
-    envelope = {
+    envelope: ErrorEnvelope = {
         "kind": "error-envelope",
         "schemaVersion": SCHEMA_VERSION,
         "code": code,
@@ -66,35 +121,36 @@ def _error_response(
         "retryable": retryable,
         "details": details or [],
     }
+    body: ErrorResponseEnvelope = {
+        "kind": "api-response",
+        "ok": False,
+        "error": envelope,
+        "meta": _meta(correlation_id),
+    }
     return JSONResponse(
         status_code=status_code,
-        content={
-            "kind": "api-response",
-            "ok": False,
-            "error": envelope,
-            "meta": _meta(correlation_id),
-        },
+        content=body,
         headers={CORRELATION_ID_HEADER: correlation_id},
     )
 
 
-def _http_error_code(status_code: int) -> str:
+def _http_error_code(status_code: int) -> ApiErrorCode:
     if status_code >= 500:
         return "internal"
     return STATUS_TO_ERROR_CODE.get(status_code, "bad-request")
 
 
-def _validation_details(exc: RequestValidationError) -> list[dict[str, str]]:
-    details: list[dict[str, str]] = []
+def _validation_details(exc: RequestValidationError) -> list[ErrorDetail]:
+    details: list[ErrorDetail] = []
     for error in exc.errors():
         location = ".".join(str(part) for part in error.get("loc", ()))
-        issue = "missing" if error.get("type") == "missing" else "invalid"
+        issue: FieldErrorIssue = "missing" if error.get("type") == "missing" else "invalid"
         details.append({"kind": "field", "field": location, "issue": issue})
     return details
 
 
 @app.get("/health")
-def health(request: Request, response: Response) -> dict[str, Any]:
+def health(request: Request, response: Response) -> SuccessResponseEnvelope:
     correlation_id = _correlation_id(request)
     response.headers[CORRELATION_ID_HEADER] = correlation_id
     return _success_response(

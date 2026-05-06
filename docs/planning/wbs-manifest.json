@@ -182,7 +182,20 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "API shell, health route, typed API/error envelope, correlation ID handling, and handler-level tests implemented.",
+        "validation": "cd apps/api && pytest PASS / 3 passed",
+        "changed_files": [
+          "apps/api/app/main.py",
+          "apps/api/tests/test_health.py"
+        ],
+        "risks": [
+          "Full ASGI TestClient smoke was not retained because TestClient hung in the current environment.",
+          "Move ASGI client/integration smoke coverage to WBS-10 integration validation."
+        ],
+        "rollback": "Revert apps/api/app/main.py and apps/api/tests/test_health.py to restore the prior API slice state."
+      }
     },
     {
       "id": "WBS-06",
