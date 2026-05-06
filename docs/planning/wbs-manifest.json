@@ -260,7 +260,18 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Chrome MV3 extension manifest and typed background message boundary implemented and validated.",
+        "validation": "pnpm --filter extension build PASS; validate_scaffold PASS; validate_planning PASS; validate_dev_flow PASS; workspace-check PASS; cleanroom-audit PASS",
+        "changed_files": [
+          "apps/extension/manifest.json",
+          "apps/extension/package.json",
+          "apps/extension/src/background.ts"
+        ],
+        "commit": "ecc1f95 feat: implement extension message boundary",
+        "rollback": "Revert WBS-07 extension manifest, package, and background message boundary changes."
+      }
     },
     {
       "id": "WBS-08",
