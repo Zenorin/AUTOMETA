@@ -62,3 +62,11 @@
 - Codex는 `AGENTS.md`를 먼저 읽고, WBS ID 단위로 작업한다.
 - WBS-03 `reference-analysis` 완료 전 contracts/API/UI 구현으로 넘어가지 않는다.
 - 실패 시 `repair-command`로 실패 유형을 분류하고 관련 workstream으로 되돌린다.
+
+## 8. WBS-03 승인된 산출물 경계
+
+- `tools/reference-analysis/src/index.ts`는 target module별 역할, 허용 증거, 금지 입력을 코드로 고정한다.
+- 허용 증거는 route inventory, message/API/DTO role, failure mode, fixture shape, hash, file inventory, policy decision으로 제한한다.
+- 금지 입력은 reference source text, recovered source, generated chunk, branded asset, screenshot/template, credential/session/token/cookie이다.
+- WBS-04 이후 계약/스키마 작업은 이 보고서의 역할과 `source-inventory.json`의 추상 evidence만 사용한다.
+- reference package의 구현 알고리즘, 주석, copywriting, UI asset, hidden credential/session behavior는 product code로 이동하지 않는다.
