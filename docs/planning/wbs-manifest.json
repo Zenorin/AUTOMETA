@@ -219,7 +219,23 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Frontend shell, React TypeScript JSX setup, API envelope wiring, and clean-room boundary UI were implemented and validated.",
+        "validation": "pnpm --filter @project/web typecheck PASS; pnpm --filter @project/web test PASS / 5 passed",
+        "changed_files": [
+          "apps/web/package.json",
+          "apps/web/tsconfig.json",
+          "apps/web/src/App.tsx",
+          "apps/web/src/main.tsx",
+          "apps/web/src/styles.css",
+          "apps/web/test/app-shell.test.mjs",
+          "docs/planning/wbs-manifest.json",
+          "pnpm-lock.yaml"
+        ],
+        "risks": [],
+        "rollback": "Revert the WBS-06 frontend shell, web package config, tsconfig, test, pnpm lockfile, and manifest changes."
+      }
     },
     {
       "id": "WBS-07",
