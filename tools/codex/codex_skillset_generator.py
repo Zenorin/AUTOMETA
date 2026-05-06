@@ -807,6 +807,8 @@ def validate_scaffold(root: Path) -> List[str]:
     errors.extend(env_example_has_secret_values(root/".env.example"))
     errors.extend(validate_package_json_specs(root))
     for path in root.rglob("*"):
+        if any(part in {"node_modules", "dist", "build", "__pycache__"} for part in path.relative_to(root).parts):
+            continue
         if not path.is_file():
             continue
         rel = path.relative_to(root).as_posix()
