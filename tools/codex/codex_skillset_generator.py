@@ -1522,7 +1522,15 @@ def validate_scaffold(root: Path) -> List[str]:
     return errors
 
 
-def _load_wbs_item_from_root(root: Optional[str], wbs_id: Optional[str]) -> Optional[Dict[str, Any]]:
+ACTIONABLE_WBS_STATUSES = {"todo", "next", "blocked"}
+ALL_WBS_DONE_MESSAGE = (
+    "All WBS items are complete. No remaining generated command.\n\n"
+    "Safe next action: create a new WBS item or phase in docs/planning/wbs-manifest.json "
+    "before generating another command."
+)
+
+
+def _load_wbs_items_from_root(root: Optional[str]) -> Optional[List[Dict[str, Any]]]:
     if not root:
         return None
     path = Path(root)/"docs/planning/wbs-manifest.json"
@@ -1533,13 +1541,45 @@ def _load_wbs_item_from_root(root: Optional[str], wbs_id: Optional[str]) -> Opti
     except Exception:
         return None
     items = data.get("items", []) if isinstance(data, dict) else []
+    return items if isinstance(items, list) else None
+
+
+def _wbs_status(item: Dict[str, Any]) -> str:
+    return str(item.get("status", "todo")).lower()
+
+
+def _all_wbs_items_done(items: Sequence[Dict[str, Any]]) -> bool:
+    return bool(items) and all(_wbs_status(item) == "done" for item in items)
+
+
+def _next_actionable_wbs_item(items: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    actionable = next((item for item in items if _wbs_status(item) in ACTIONABLE_WBS_STATUSES), None)
+    if actionable is not None:
+        return actionable
+    return next((item for item in items if _wbs_status(item) != "done"), None)
+
+
+def _load_wbs_item_from_root(root: Optional[str], wbs_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    items = _load_wbs_items_from_root(root)
+    if items is None:
+        return None
     if wbs_id:
         return next((i for i in items if i.get("id") == wbs_id), None)
-    return next((i for i in items if str(i.get("status", "todo")).lower() in {"todo", "next", "blocked"}), items[0] if items else None)
+    return _next_actionable_wbs_item(items)
+
+
+def _root_wbs_manifest_is_complete(root: Optional[str], wbs_id: Optional[str]) -> bool:
+    if wbs_id:
+        return False
+    items = _load_wbs_items_from_root(root)
+    return _all_wbs_items_done(items) if items is not None else False
 
 
 def cmd_generate_next_command(args: argparse.Namespace) -> int:
     chosen = _load_wbs_item_from_root(getattr(args, "root", None), getattr(args, "wbs_id", None))
+    if chosen is None and _root_wbs_manifest_is_complete(getattr(args, "root", None), getattr(args, "wbs_id", None)):
+        print(ALL_WBS_DONE_MESSAGE)
+        return 0
     if chosen is None:
         items = wbs_items(normalize_profile(read_json(args.config)))
         chosen = next((i for i in items if i["id"] == getattr(args, "wbs_id", None)), items[0] if items else None)
