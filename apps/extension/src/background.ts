@@ -1,9 +1,9 @@
-type ContractSchemaVersion = "2026-05-06.wbs-04";
+type ContractSchemaVersion = "2026-05-07.wbs-12";
 type CorrelationId = string;
 type RequestId = string;
 type JobId = string;
-type PipelineStage = "queued" | "cancelled";
-type JobLifecycleState = "queued" | "cancelled";
+type PipelineStage = "queued" | "completed" | "cancelled";
+type JobLifecycleState = "queued" | "completed" | "cancelled";
 type ApiErrorCode = "bad-request" | "forbidden" | "validation-failed";
 
 type ErrorEnvelope = {
@@ -54,9 +54,16 @@ type PipelineProgressEvent = {
   readonly message: string;
 };
 
-const contractSchemaVersion: ContractSchemaVersion = "2026-05-06.wbs-04";
-const scaffoldTimestamp = "2026-05-06T00:00:00Z";
+export const SOURCING_JOB_READY_CHECK = "autometa.sourcing.job.ready.check" as const;
+export const SOURCING_JOB_FIXTURE_REQUEST = "autometa.sourcing.job.fixture.request" as const;
+export const SOURCING_JOB_STATUS_QUERY = "autometa.sourcing.job.status.query" as const;
+
+const contractSchemaVersion: ContractSchemaVersion = "2026-05-07.wbs-12";
+const scaffoldTimestamp = "2026-05-07T00:00:00.000Z";
+const fixtureCompletedAt = "2026-05-07T00:00:05.000Z";
+const fixtureJobId = "job-fixture-core-validation";
 const extensionSource: "extension-background" = "extension-background";
+export const fixtureTrustedSenderId = "autometa-extension-fixture-boundary";
 
 type RuntimeSender = {
   readonly id?: string;
@@ -78,7 +85,7 @@ type ChromeRuntimeApi = {
   };
 };
 
-declare const chrome: ChromeRuntimeApi;
+declare const chrome: ChromeRuntimeApi | undefined;
 
 type StatusCommand = {
   readonly type: "autometa.job.status.get";
@@ -102,7 +109,35 @@ type ProgressCommand = {
   };
 };
 
-type AllowedScaffoldCommand = StatusCommand | ProgressCommand | CancelCommand;
+export type ExtensionSourcingJobReadinessRequest = {
+  readonly type: typeof SOURCING_JOB_READY_CHECK;
+  readonly payload: {
+    readonly sourceType: "fixture";
+  };
+};
+
+type ExtensionSourcingJobFixtureRequest = {
+  readonly type: typeof SOURCING_JOB_FIXTURE_REQUEST;
+  readonly payload: {
+    readonly sourceType: "fixture";
+    readonly jobId?: JobId;
+  };
+};
+
+type ExtensionSourcingJobStatusQuery = {
+  readonly type: typeof SOURCING_JOB_STATUS_QUERY;
+  readonly payload: {
+    readonly jobId: JobId;
+  };
+};
+
+type AllowedScaffoldCommand =
+  | StatusCommand
+  | ProgressCommand
+  | CancelCommand
+  | ExtensionSourcingJobReadinessRequest
+  | ExtensionSourcingJobFixtureRequest
+  | ExtensionSourcingJobStatusQuery;
 
 type BoundaryRequest = {
   readonly kind: "autometa.extension.request";
@@ -134,7 +169,57 @@ type CancelReadiness = {
   readonly note: "cancel-boundary-ready-no-live-side-effects";
 };
 
-type BoundaryData = StatusReadiness | ProgressReadiness | CancelReadiness;
+export type ExtensionSourcingJobReadinessResponse = {
+  readonly kind: "extension-sourcing-job-readiness";
+  readonly allowed: true;
+  readonly ready: true;
+  readonly sourceType: "fixture";
+  readonly jobId: JobId;
+  readonly status: "completed";
+  readonly apiBoundary: {
+    readonly createRoute: "POST /api/v1/sourcing/jobs";
+    readonly statusRoute: "GET /api/v1/sourcing/jobs/{job_id}";
+    readonly resultRoute: "GET /api/v1/sourcing/jobs/{job_id}/result";
+  };
+  readonly resultSummary: {
+    readonly kind: "sourcing-job-result-summary";
+    readonly jobId: JobId;
+    readonly status: "completed";
+    readonly markets: readonly ["naver", "coupang", "unknown"];
+    readonly itemCount: 2;
+    readonly failureCount: 2;
+    readonly collectorStatuses: readonly ["success", "partial", "failed"];
+    readonly completedAt: typeof fixtureCompletedAt;
+  };
+  readonly note: "fixture-only-ready-no-live-access";
+};
+
+export type ExtensionUnsupportedLiveSourceResponse = {
+  readonly kind: "extension-unsupported-live-source";
+  readonly allowed: false;
+  readonly ready: false;
+  readonly reason: "unsupported-live-source";
+  readonly message: "Only fixture-only sourcing job readiness is supported.";
+};
+
+type FixtureStatusReadiness = {
+  readonly kind: "extension-sourcing-job-status";
+  readonly jobId: JobId;
+  readonly status: "completed";
+  readonly progress: {
+    readonly completedUnits: 8;
+    readonly totalUnits: 8;
+    readonly updatedAt: typeof fixtureCompletedAt;
+  };
+  readonly note: "fixture-status-ready-no-live-access";
+};
+
+type BoundaryData =
+  | StatusReadiness
+  | ProgressReadiness
+  | CancelReadiness
+  | ExtensionSourcingJobReadinessResponse
+  | FixtureStatusReadiness;
 
 type BoundaryResponse =
   | {
@@ -213,6 +298,19 @@ function parseJobIdPayload(value: unknown): { readonly jobId: JobId } | undefine
   return jobId === undefined ? undefined : { jobId };
 }
 
+function parseFixtureSourcePayload(value: unknown): { readonly sourceType: "fixture"; readonly jobId?: JobId } | undefined {
+  if (!isRecord(value) || value.sourceType !== "fixture") {
+    return undefined;
+  }
+
+  const jobId = getString(value, "jobId");
+  return jobId === undefined ? { sourceType: "fixture" } : { sourceType: "fixture", jobId };
+}
+
+function hasUnsupportedLiveSourcePayload(value: unknown): boolean {
+  return isRecord(value) && typeof value.sourceType === "string" && value.sourceType !== "fixture";
+}
+
 function parseCancelPayload(value: unknown): CancelCommand["payload"] | undefined {
   if (!isRecord(value)) {
     return undefined;
@@ -248,6 +346,21 @@ function parseAllowedCommand(value: unknown): AllowedScaffoldCommand | undefined
     return payload === undefined ? undefined : { type, payload };
   }
 
+  if (type === SOURCING_JOB_READY_CHECK) {
+    const payload = parseFixtureSourcePayload(value.payload);
+    return payload === undefined ? undefined : { type, payload: { sourceType: "fixture" } };
+  }
+
+  if (type === SOURCING_JOB_FIXTURE_REQUEST) {
+    const payload = parseFixtureSourcePayload(value.payload);
+    return payload === undefined ? undefined : { type, payload };
+  }
+
+  if (type === SOURCING_JOB_STATUS_QUERY) {
+    const payload = parseJobIdPayload(value.payload);
+    return payload === undefined ? undefined : { type, payload };
+  }
+
   return undefined;
 }
 
@@ -277,6 +390,26 @@ function parseBoundaryRequest(message: unknown): BoundaryRequest | BoundaryRespo
   }
 
   const sentAt = getString(message, "sentAt");
+  const rawCommand = isRecord(message.message) ? message.message : undefined;
+  if (
+    rawCommand !== undefined &&
+    (rawCommand.type === SOURCING_JOB_READY_CHECK || rawCommand.type === SOURCING_JOB_FIXTURE_REQUEST) &&
+    hasUnsupportedLiveSourcePayload(rawCommand.payload)
+  ) {
+    return {
+      kind: "autometa.extension.response",
+      ok: false,
+      requestId,
+      correlationId,
+      source: extensionSource,
+      error: errorEnvelope(
+        "validation-failed",
+        "Only fixture-only sourcing job readiness is supported.",
+        correlationId,
+      ),
+    };
+  }
+
   const command = parseAllowedCommand(message.message);
   if (sentAt === undefined || command === undefined) {
     return errorResponse(requestId, correlationId, "validation-failed", "Unsupported or invalid scaffold command.");
@@ -298,7 +431,7 @@ function scaffoldJobState(jobId: JobId, lifecycle: JobState["lifecycle"]): JobSt
     schemaVersion: contractSchemaVersion,
     jobId,
     lifecycle,
-    stage: lifecycle === "cancelled" ? "cancelled" : "queued",
+    stage: lifecycle,
     cancel:
       lifecycle === "cancelled"
         ? {
@@ -316,7 +449,7 @@ function scaffoldJobState(jobId: JobId, lifecycle: JobState["lifecycle"]): JobSt
       status: "not-retryable",
       reason: lifecycle === "cancelled" ? "cancelled" : "policy",
     },
-    updatedAt: scaffoldTimestamp,
+    updatedAt: lifecycle === "completed" ? fixtureCompletedAt : scaffoldTimestamp,
   };
 }
 
@@ -332,6 +465,47 @@ function scaffoldProgress(jobId: JobId, correlationId: CorrelationId): PipelineP
     completedUnits: 0,
     totalUnits: 0,
     message: "Progress boundary is ready; live collection is not implemented in WBS-07.",
+  };
+}
+
+function fixtureReadiness(jobId: JobId): ExtensionSourcingJobReadinessResponse {
+  return {
+    kind: "extension-sourcing-job-readiness",
+    allowed: true,
+    ready: true,
+    sourceType: "fixture",
+    jobId,
+    status: "completed",
+    apiBoundary: {
+      createRoute: "POST /api/v1/sourcing/jobs",
+      statusRoute: "GET /api/v1/sourcing/jobs/{job_id}",
+      resultRoute: "GET /api/v1/sourcing/jobs/{job_id}/result",
+    },
+    resultSummary: {
+      kind: "sourcing-job-result-summary",
+      jobId,
+      status: "completed",
+      markets: ["naver", "coupang", "unknown"],
+      itemCount: 2,
+      failureCount: 2,
+      collectorStatuses: ["success", "partial", "failed"],
+      completedAt: fixtureCompletedAt,
+    },
+    note: "fixture-only-ready-no-live-access",
+  };
+}
+
+function fixtureStatus(jobId: JobId): FixtureStatusReadiness {
+  return {
+    kind: "extension-sourcing-job-status",
+    jobId,
+    status: "completed",
+    progress: {
+      completedUnits: 8,
+      totalUnits: 8,
+      updatedAt: fixtureCompletedAt,
+    },
+    note: "fixture-status-ready-no-live-access",
   };
 }
 
@@ -353,6 +527,27 @@ function handleAllowedRequest(request: BoundaryRequest): BoundaryResponse {
         state: scaffoldJobState(request.message.payload.jobId, "queued"),
         note: "status-boundary-ready-no-live-collection",
       },
+    };
+  }
+
+  if (request.message.type === SOURCING_JOB_READY_CHECK) {
+    return {
+      ...base,
+      data: fixtureReadiness(fixtureJobId),
+    };
+  }
+
+  if (request.message.type === SOURCING_JOB_FIXTURE_REQUEST) {
+    return {
+      ...base,
+      data: fixtureReadiness(request.message.payload.jobId ?? fixtureJobId),
+    };
+  }
+
+  if (request.message.type === SOURCING_JOB_STATUS_QUERY) {
+    return {
+      ...base,
+      data: fixtureStatus(request.message.payload.jobId),
     };
   }
 
@@ -380,6 +575,10 @@ function handleAllowedRequest(request: BoundaryRequest): BoundaryResponse {
 }
 
 function isTrustedInternalSender(sender: RuntimeSender): boolean {
+  if (typeof chrome === "undefined") {
+    return sender.id === fixtureTrustedSenderId;
+  }
+
   return chrome.runtime.id !== undefined && sender.id === chrome.runtime.id;
 }
 
@@ -387,21 +586,25 @@ function isBoundaryResponse(value: BoundaryRequest | BoundaryResponse): value is
   return value.kind === "autometa.extension.response";
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+export function handleExtensionBoundaryMessage(message: unknown, sender: RuntimeSender): BoundaryResponse {
   const parsed = parseBoundaryRequest(message);
   const requestId = parsed.requestId;
   const correlationId = parsed.correlationId;
 
   if (!isTrustedInternalSender(sender)) {
-    sendResponse(errorResponse(requestId, correlationId, "forbidden", "External extension messages are not trusted."));
-    return false;
+    return errorResponse(requestId, correlationId, "forbidden", "External extension messages are not trusted.");
   }
 
   if (isBoundaryResponse(parsed)) {
-    sendResponse(parsed);
-    return false;
+    return parsed;
   }
 
-  sendResponse(handleAllowedRequest(parsed));
-  return false;
-});
+  return handleAllowedRequest(parsed);
+}
+
+if (typeof chrome !== "undefined") {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    sendResponse(handleExtensionBoundaryMessage(message, sender));
+    return false;
+  });
+}

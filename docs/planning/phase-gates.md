@@ -169,3 +169,22 @@ completed web-jobs slice adds:
 The UI uses deterministic static envelope examples and does not call live
 marketplaces, automate browsers, require login, handle session/cookie/token
 material, expose credentials, add secrets, or copy reference source/assets.
+
+## WBS-17 Fixture Extension Readiness Evidence
+
+WBS-17 is complete when the extension message boundary supports fixture-only
+sourcing job readiness/status messages without opening live collection or page
+access. The completed extension-job-bridge slice adds:
+
+- `SOURCING_JOB_READY_CHECK`, `SOURCING_JOB_FIXTURE_REQUEST`, and
+  `SOURCING_JOB_STATUS_QUERY` message constants.
+- Deterministic fixture readiness and completed status responses aligned with
+  the WBS-15 API route vocabulary.
+- Typed rejection for unsupported live/external source payloads and unknown
+  messages.
+- An inert content-script boundary marker plus tests proving no marketplace URL
+  access, browser automation, or private browser field exposure is introduced.
+
+The extension does not call real API endpoints, access marketplace pages,
+automate browsers, read cookies/sessions/tokens/credentials/local storage, add
+secrets, or change MV3 permissions.

@@ -678,31 +678,49 @@ Expected evidence:
 
 ```text
 Read AGENTS.md first.
-Use $project-extension-bridge $content-script-boundary $privacy-boundary-review $consistency-guard.
+Use $planning-and-task-breakdown $consistency-guard $project-extension-bridge $content-script-boundary $privacy-boundary-review.
 
 Target workstream: project-extension-bridge
 Target module path: apps/extension
 
 Target files:
 - `apps/extension/src/background.ts`
-- `packages/contracts/src/index.ts`
+- `apps/extension/src/content.ts`
+- `apps/extension/test/*.test.mjs`
+- `docs/contracts/api-contracts.md`
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
 
 Goal:
-Align extension messages with sourcing job readiness contracts without opening external trust or session handling.
+Connect extension request messages to the sourcing job readiness boundary without enabling live crawling, browser automation, login/session handling, or marketplace access.
 
 Required behavior:
+- Add typed extension message vocabulary for sourcing job readiness.
 - Support only explicitly allowed fixture/job readiness messages with requestId correlation.
+- Return deterministic readiness/status responses.
+- Keep extension boundary aligned with WBS-12 contracts and WBS-15 API vocabulary.
+- Preserve existing unsupported-message behavior.
 - Return typed errors for unsupported messages.
 - Do not use wildcard trust for external messages.
-- Do not implement live crawling, login, marketplace automation, session extraction, cookie handling, credential handling, or external API calls.
+- Do not call real API endpoints, access marketplace pages, read cookies/sessions/tokens/credentials/local storage, add browser automation, or implement live crawling.
 
 Validation commands:
+- `pnpm --filter extension typecheck`
 - `pnpm --filter extension build`
-- `pnpm --filter @project/contracts typecheck`
+- `pnpm --filter extension test`
+- `pnpm --filter @project/web test`
+- `cd apps/api && pytest`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
 
 Expected evidence:
 - Changed files
-- Message boundary summary
+- Extension message boundary summary
+- Fixture-only readiness behavior summary
 - Commands run and PASS/FAIL results
 - Remaining risks or blockers
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.

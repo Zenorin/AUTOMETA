@@ -246,8 +246,15 @@
         "consistency-guard"
       ],
       "validation_commands": [
+        "pnpm --filter extension typecheck",
         "pnpm --filter extension build",
-        "pnpm --filter @project/contracts typecheck"
+        "pnpm --filter extension test",
+        "pnpm --filter @project/web test",
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
       ]
     },
     {

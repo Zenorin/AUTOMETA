@@ -731,18 +731,56 @@
       ],
       "target_files": [
         "apps/extension/src/background.ts",
-        "packages/contracts/src/index.ts"
+        "apps/extension/src/content.ts",
+        "apps/extension/test/sourcing-readiness.test.mjs",
+        "docs/contracts/api-contracts.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
+        "pnpm --filter extension typecheck",
         "pnpm --filter extension build",
-        "pnpm --filter @project/contracts typecheck"
+        "pnpm --filter extension test",
+        "pnpm --filter @project/web test",
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
       ],
       "depends_on": [
         "WBS-16"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, message boundary summary, blockers, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Connected extension request messages to fixture-only sourcing job readiness/status boundaries while preserving unsupported-message and untrusted-sender rejection.",
+        "validation": "pnpm --filter extension typecheck PASS; pnpm --filter extension build PASS; pnpm --filter extension test PASS; pnpm --filter @project/web test PASS; cd apps/api && pytest PASS; validate-planning PASS; validate-dev-flow PASS; pnpm validate:all PASS; git diff --check PASS",
+        "changed_files": [
+          "apps/extension/src/background.ts",
+          "apps/extension/src/content.ts",
+          "apps/extension/test/sourcing-readiness.test.mjs",
+          "docs/contracts/api-contracts.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "extension_message_boundary_summary": [
+          "Added SOURCING_JOB_READY_CHECK, SOURCING_JOB_FIXTURE_REQUEST, and SOURCING_JOB_STATUS_QUERY message constants and typed readiness/status response shapes.",
+          "Exported a pure handleExtensionBoundaryMessage path for deterministic tests while keeping Chrome runtime listener registration guarded.",
+          "Preserved typed unsupported-message and untrusted-sender errors."
+        ],
+        "fixture_only_readiness_summary": "Fixture readiness messages return deterministic completed job readiness/status data aligned with the WBS-15 create/status/result route vocabulary; unsupported live source payloads are rejected with validation-failed ErrorEnvelope responses.",
+        "risks": [
+          "The extension does not call API endpoints; readiness remains deterministic fixture-only data.",
+          "Content script remains inert for WBS-17 and does not read page, storage, or network data."
+        ],
+        "rollback": "Revert the WBS-17 extension source/test, contract docs, and planning evidence changes to restore the pre-WBS-17 state."
+      }
     },
     {
       "id": "WBS-18",

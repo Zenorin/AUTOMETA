@@ -131,6 +131,23 @@ rejected. It must not render secret/session/cookie/token field names, expose
 credential values, call marketplace pages, automate browsers, or imply that
 real collection is enabled.
 
+### Fixture-Only Extension Readiness Messages
+
+WBS-17 adds extension message readiness concepts for fixture-only sourcing job
+coordination:
+
+- `SOURCING_JOB_READY_CHECK` returns an allowed/ready fixture boundary.
+- `SOURCING_JOB_FIXTURE_REQUEST` returns deterministic fixture job readiness
+  aligned with `POST /api/v1/sourcing/jobs`.
+- `SOURCING_JOB_STATUS_QUERY` returns deterministic completed job status
+  aligned with `GET /api/v1/sourcing/jobs/{job_id}`.
+
+Unknown message types still return typed unsupported errors, and unsupported
+live/external source payloads are rejected with `validation-failed` envelopes.
+The extension does not call real API endpoints, access marketplace pages,
+automate browsers, read cookies/sessions/tokens/credentials/local storage, or
+enable live collection.
+
 ### Fixture Collector References
 
 `FixtureCollectorInput` and `FixtureCollectorResult` define the fixture-only
