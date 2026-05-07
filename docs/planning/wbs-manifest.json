@@ -395,7 +395,23 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Final handoff-ready evidence prepared for the clean-room scaffold through WBS-10, with current validation baseline, carried risks, rollback notes, and next safe slice documented.",
+        "validation": "pnpm validate:all PASS; validate_scaffold PASS; validate_planning PASS; validate_dev_flow PASS; workspace-check PASS; cleanroom-audit PASS",
+        "changed_files": [
+          "PLANS.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "risks": [
+          "Full ASGI TestClient/client smoke remains deferred from WBS-05 because TestClient hung in the local environment.",
+          "Package-level type exports are not formalized for internal workspace packages; current implementation imports package src entrypoints directly.",
+          "Existing dirty workspace files from previous dependency-linking slices remain visible: packages/collectors/package.json, packages/core/package.json, pnpm-lock.yaml."
+        ],
+        "next_safe_slice": "API ASGI integration smoke under apps/api, bounded to tests and directly required API test support.",
+        "rollback": "Revert PLANS.md, docs/planning/codex-command-queue.md, and docs/planning/wbs-manifest.json to restore the prior handoff state."
+      }
     }
   ]
 }

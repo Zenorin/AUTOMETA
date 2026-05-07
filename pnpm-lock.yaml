@@ -40,6 +40,10 @@ importers:
         version: 5.4.0
 
   packages/collectors:
+    dependencies:
+      '@project/contracts':
+        specifier: workspace:*
+        version: link:../contracts
     devDependencies:
       typescript:
         specifier: ^5.5.4
@@ -52,6 +56,13 @@ importers:
         version: 5.9.3
 
   packages/core:
+    dependencies:
+      '@project/collectors':
+        specifier: workspace:*
+        version: link:../collectors
+      '@project/contracts':
+        specifier: workspace:*
+        version: link:../contracts
     devDependencies:
       typescript:
         specifier: ^5.5.4

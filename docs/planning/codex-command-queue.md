@@ -380,36 +380,79 @@ Expected evidence:
 
 ```text
 Read AGENTS.md first.
-Use $evidence-pack.
+Use $planning-and-task-breakdown $evidence-pack $consistency-guard.
 
-Target workstream: evidence-pack
+Target workstream: project-development-bootstrap
 Target module path: .
 
 Target files:
 - `PLANS.md`
 - `docs/planning/codex-command-queue.md`
+- `docs/planning/wbs-manifest.json`
 
 Allowed changes:
 - Implement only this slice and directly required support files.
 - Update tests, docs, contracts, and evidence for this slice.
 - Carry forward WBS-10 validation results, any classified blockers, and the WBS-05 ASGI TestClient deferred-smoke risk.
 - Do not reopen WBS-04 through WBS-10 implementation unless a blocker is documented and explicitly targeted.
+- Do not implement new product features.
 
 Forbidden changes:
 - Do not commit secrets or real credentials.
 - Do not delete existing behavior without role trace and approval.
 - Do not copy restricted reference source text/assets verbatim.
 - Do not hide failed checks, clean-room risks, or deferred integration smoke.
+- Do not weaken validators, tests, clean-room audit, scaffold checks, or phase gates.
 
 Validation commands:
+- `pnpm validate:all`
 - `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `python -S tools/codex/validate_scaffold.py --root .`
+- `python -S tools/codex/validate_planning.py --root .`
 - `python -S tools/codex/validate_dev_flow.py --root .`
+- `node tools/checks/workspace-check.mjs`
+- `node tools/checks/cleanroom-audit.mjs`
 
 Expected evidence:
 - Changed files
+- Completed WBS-00 through WBS-10 evidence summary
 - WBS-10 command outcomes and unresolved risk summary
-- Explicit next queue item or blocker status
+- Explicit next safe development slice or blocker status
 - Commands run and PASS/FAIL results
 - Remaining risks or blockers
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### Next safe development slice — API ASGI integration smoke
+
+```text
+Read AGENTS.md first.
+Use $project-backend-api $backend-test-matrix $api-error-handling-review.
+
+Target workstream: project-backend-api
+Target module path: apps/api
+
+Goal:
+Add bounded FastAPI ASGI/client smoke coverage for health and error envelope behavior that closes the WBS-05 deferred TestClient risk if the environment supports it.
+
+Allowed changes:
+- Add or adjust API tests and directly required API test support only.
+- Preserve existing handler-level health/error tests.
+- Keep the test bounded so hangs fail visibly instead of being hidden.
+
+Forbidden changes:
+- Do not weaken or skip existing API tests.
+- Do not hide ASGI/TestClient failures.
+- Do not add product features, real credentials, sessions, cookies, tokens, marketplace crawling, or external API calls.
+- Do not change web, extension, collectors, core, or shared contracts unless a directly required type/export issue blocks the API smoke.
+
+Validation commands:
+- `cd apps/api && pytest`
+- `pnpm validate:all`
+
+Expected evidence:
+- Changed files
+- ASGI/client smoke PASS/FAIL with failure source classified
+- Remaining risks or blockers
+- Rollback note: Revert the API test/support changes if validation fails.
 ```
