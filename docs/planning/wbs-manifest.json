@@ -295,7 +295,15 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Market collector contract scaffold implemented and validated without live crawling or hidden session handling.",
+        "validation": "pnpm --filter @project/collectors typecheck PASS; validate_scaffold PASS; validate_planning PASS; validate_dev_flow PASS; workspace-check PASS; cleanroom-audit PASS",
+        "changed_files": [
+          "packages/collectors/src/index.ts"
+        ],
+        "rollback": "Revert packages/collectors/src/index.ts to restore the prior collector scaffold state."
+      }
     },
     {
       "id": "WBS-09",
