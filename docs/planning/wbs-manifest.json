@@ -475,22 +475,57 @@
       "suggested_skills": [
         "project-market-collectors",
         "crawler-contract-review",
-        "privacy-boundary-review"
+        "privacy-boundary-review",
+        "planning-and-task-breakdown",
+        "consistency-guard"
       ],
       "target_files": [
         "packages/collectors/src/index.ts",
         "packages/collectors/fixtures/deterministic-results.json",
-        "packages/collectors/test/fixture-contract.test.mjs"
+        "packages/collectors/test/fixture-contract.test.mjs",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
-        "pnpm --filter @project/collectors typecheck"
+        "pnpm --filter @project/collectors typecheck",
+        "pnpm --filter @project/collectors test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all"
       ],
       "depends_on": [
         "WBS-12"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, fixture provenance, blockers, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Added deterministic collector fixture inputs, raw metadata snapshots, normalized fixture results, and fixture contract checks against shared contract vocabulary.",
+        "validation": "pnpm --filter @project/collectors typecheck PASS; pnpm --filter @project/collectors test PASS; validate-planning PASS; validate-dev-flow PASS; pnpm validate:all PASS",
+        "changed_files": [
+          "packages/collectors/src/index.ts",
+          "packages/collectors/fixtures/deterministic-results.json",
+          "packages/collectors/test/fixture-contract.test.mjs",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "fixture_provenance": "WBS-13 fixtures are synthetic clean-room data with reserved fixture.invalid URLs; they contain no marketplace data, secrets, cookies, tokens, credentials, session material, live crawling, browser automation, or external API output.",
+        "contract_checks": [
+          "Fixture inputs/results use contractSchemaVersion from packages/contracts.",
+          "Fixture result statuses, markets, and failure reasons are checked against shared contract runtime vocabulary.",
+          "Raw metadata snapshots remain separate from normalized FixtureCollectorResult output.",
+          "Rate-limited and unsupported-market outcomes are represented as typed PartialFailure fixtures."
+        ],
+        "risks": [
+          "Fixtures are examples only; real marketplace crawling remains out of scope.",
+          "Future WBS slices must keep fixture domains synthetic and keep session/cookie/token handling disabled."
+        ],
+        "rollback": "Revert the WBS-13 collector fixture, test, source, and planning evidence changes to restore the pre-WBS-13 state."
+      }
     },
     {
       "id": "WBS-14",

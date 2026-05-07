@@ -54,7 +54,7 @@ The next development phase starts after completed WBS-11 handoff and moves from 
 | WBS | Phase | Gate intent |
 |---|---|---|
 | WBS-12 | product-contracts | Expand shared sourcing job contracts for create/status/progress/cancel, typed errors, and request correlation before API/web/extension implementation. |
-| WBS-13 | fixture-collectors | Add deterministic collector fixtures and fixture contract checks using synthetic or sanitized fixture data only. |
+| WBS-13 | fixture-collectors | Add deterministic collector fixtures and fixture contract checks using synthetic or sanitized fixture data only; collectors typecheck/test, planning/dev-flow validation, and `pnpm validate:all` pass before done. |
 | WBS-14 | core-validation | Validate core pipeline inputs/outputs against fixture collector results without adding external IO. |
 | WBS-15 | backend-jobs | Add fixture-only sourcing job API boundary and tests using shared envelopes. |
 | WBS-16 | web-jobs | Add web job creation/status UI states driven by the API envelope vocabulary. |
@@ -88,3 +88,21 @@ adds:
 This gate remains fixture-safe: no live marketplace crawling, login automation,
 hidden cookie/session/token handling, credential handling, external API calls,
 secrets, or copied reference source/assets are allowed.
+
+## WBS-13 Fixture Collector Evidence
+
+WBS-13 is complete when deterministic collector fixtures exercise shared
+fixture collector contracts without adding runtime crawling behavior. The
+completed collector slice adds:
+
+- Synthetic fixture collector inputs and normalized fixture results.
+- Sanitized raw metadata snapshots kept outside the normalized result payload.
+- Contract checks for shared schema version, market IDs, result statuses,
+  fixture provenance, and collector failure reasons.
+- Typed fixture outcomes for success, partial rate-limit failure, and
+  unsupported-market failure.
+
+Fixture provenance: the WBS-13 fixture set is synthetic clean-room data using
+reserved `fixture.invalid` URLs. It contains no marketplace data, secrets,
+cookies, tokens, credentials, session material, browser automation, live
+crawling, or external API output.

@@ -165,10 +165,16 @@
       "suggested_skills": [
         "project-market-collectors",
         "crawler-contract-review",
-        "privacy-boundary-review"
+        "privacy-boundary-review",
+        "planning-and-task-breakdown",
+        "consistency-guard"
       ],
       "validation_commands": [
-        "pnpm --filter @project/collectors typecheck"
+        "pnpm --filter @project/collectors typecheck",
+        "pnpm --filter @project/collectors test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all"
       ]
     },
     {

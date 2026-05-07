@@ -1,0 +1,397 @@
+{
+  "kind": "deterministic-fixture-collector-fixture-set",
+  "schemaVersion": "2026-05-07.wbs-12",
+  "fixtureId": "deterministic-collector-fixtures",
+  "revision": "wbs-13.2026-05-07",
+  "provenanceNote": "Synthetic WBS-13 fixture set authored in clean-room form. It uses reserved fixture.invalid URLs and contains no marketplace data, secrets, cookies, tokens, credentials, session material, live crawling, browser automation, or external API output.",
+  "examples": [
+    {
+      "kind": "deterministic-fixture-collector-example",
+      "provenanceNote": "Synthetic success fixture with sanitized raw metadata and normalized collector output.",
+      "input": {
+        "kind": "fixture-collector-input",
+        "schemaVersion": "2026-05-07.wbs-12",
+        "jobId": "job-fixture-naver-success",
+        "requestId": "req-fixture-naver-success",
+        "correlationId": "corr-fixture-naver-success",
+        "sourceType": "fixture",
+        "fixture": {
+          "kind": "fixture-provenance",
+          "fixtureId": "deterministic-collector-fixtures",
+          "revision": "wbs-13.2026-05-07",
+          "source": "synthetic",
+          "containsSecrets": false,
+          "containsSessionMaterial": false
+        },
+        "seed": {
+          "kind": "keyword",
+          "value": "synthetic desk lamp"
+        },
+        "scope": {
+          "markets": ["naver"],
+          "locale": "ko-KR",
+          "currency": "KRW",
+          "maxProducts": 1
+        },
+        "requestedAt": "2026-05-07T00:00:00.000Z"
+      },
+      "raw": [
+        {
+          "kind": "collector-raw-snapshot",
+          "schemaVersion": "2026-05-07.wbs-12",
+          "jobId": "job-fixture-naver-success",
+          "market": "naver",
+          "capturedAt": "2026-05-07T00:00:00.000Z",
+          "entry": {
+            "kind": "search-results",
+            "url": "https://fixture.invalid/naver/search/synthetic-desk-lamp",
+            "market": "naver"
+          },
+          "statusCode": 200,
+          "headers": [
+            {
+              "name": "content-type",
+              "value": "text/html; charset=utf-8"
+            }
+          ],
+          "fields": [
+            {
+              "purpose": "market-product-id",
+              "source": "structured-data",
+              "value": "NAVER-FIXTURE-001"
+            },
+            {
+              "purpose": "title",
+              "source": "visible-text",
+              "value": "Synthetic Desk Lamp"
+            },
+            {
+              "purpose": "price",
+              "source": "visible-text",
+              "value": "129900 KRW"
+            }
+          ],
+          "body": {
+            "kind": "raw-body",
+            "serialization": "not-persisted",
+            "redaction": "html-and-script-content-excluded"
+          },
+          "credentialBoundary": {
+            "cookies": "not-collected",
+            "credentials": "not-collected",
+            "sessionMaterial": "metadata-only"
+          }
+        }
+      ],
+      "normalized": {
+        "kind": "fixture-collector-result",
+        "schemaVersion": "2026-05-07.wbs-12",
+        "jobId": "job-fixture-naver-success",
+        "requestId": "req-fixture-naver-success",
+        "correlationId": "corr-fixture-naver-success",
+        "sourceType": "fixture",
+        "fixture": {
+          "kind": "fixture-provenance",
+          "fixtureId": "deterministic-collector-fixtures",
+          "revision": "wbs-13.2026-05-07",
+          "source": "synthetic",
+          "containsSecrets": false,
+          "containsSessionMaterial": false
+        },
+        "result": {
+          "kind": "collector-result",
+          "status": "success",
+          "schemaVersion": "2026-05-07.wbs-12",
+          "jobId": "job-fixture-naver-success",
+          "market": "naver",
+          "products": [
+            {
+              "kind": "normalized-product",
+              "schemaVersion": "2026-05-07.wbs-12",
+              "productId": "normalized-fixture-naver-001",
+              "source": {
+                "market": "naver",
+                "marketProductId": "NAVER-FIXTURE-001",
+                "collectedAt": "2026-05-07T00:00:00.000Z",
+                "canonicalUrl": "https://fixture.invalid/naver/products/NAVER-FIXTURE-001"
+              },
+              "title": "Synthetic Desk Lamp",
+              "brand": "Autometa Fixture",
+              "categoryPath": ["Fixtures", "Lighting"],
+              "offer": {
+                "price": {
+                  "amountMinor": 129900,
+                  "currency": "KRW"
+                },
+                "availability": "in-stock",
+                "seller": {
+                  "sellerId": "fixture-seller-001",
+                  "name": "Fixture Seller"
+                }
+              },
+              "images": [
+                {
+                  "url": "https://fixture.invalid/assets/naver-fixture-001.png",
+                  "role": "primary",
+                  "altText": "Synthetic fixture product image"
+                }
+              ],
+              "attributes": [
+                {
+                  "name": "fixtureSource",
+                  "value": "synthetic",
+                  "source": "derived"
+                }
+              ]
+            }
+          ],
+          "stats": {
+            "requestedCount": 1,
+            "collectedCount": 1,
+            "skippedCount": 0,
+            "failedCount": 0
+          },
+          "completedAt": "2026-05-07T00:00:05.000Z"
+        },
+        "completedAt": "2026-05-07T00:00:05.000Z"
+      }
+    },
+    {
+      "kind": "deterministic-fixture-collector-example",
+      "provenanceNote": "Synthetic partial fixture for typed rate-limit failure handling.",
+      "input": {
+        "kind": "fixture-collector-input",
+        "schemaVersion": "2026-05-07.wbs-12",
+        "jobId": "job-fixture-coupang-partial",
+        "requestId": "req-fixture-coupang-partial",
+        "correlationId": "corr-fixture-coupang-partial",
+        "sourceType": "fixture",
+        "fixture": {
+          "kind": "fixture-provenance",
+          "fixtureId": "deterministic-collector-fixtures",
+          "revision": "wbs-13.2026-05-07",
+          "source": "synthetic",
+          "containsSecrets": false,
+          "containsSessionMaterial": false
+        },
+        "seed": {
+          "kind": "market-product-id",
+          "market": "coupang",
+          "marketProductId": "COUPANG-FIXTURE-002"
+        },
+        "scope": {
+          "markets": ["coupang"],
+          "locale": "ko-KR",
+          "currency": "KRW",
+          "maxProducts": 2
+        },
+        "requestedAt": "2026-05-07T00:00:00.000Z"
+      },
+      "raw": [
+        {
+          "kind": "collector-raw-snapshot",
+          "schemaVersion": "2026-05-07.wbs-12",
+          "jobId": "job-fixture-coupang-partial",
+          "market": "coupang",
+          "capturedAt": "2026-05-07T00:00:00.000Z",
+          "entry": {
+            "kind": "product-detail",
+            "url": "https://fixture.invalid/coupang/products/COUPANG-FIXTURE-002",
+            "market": "coupang"
+          },
+          "statusCode": 429,
+          "headers": [
+            {
+              "name": "retry-after",
+              "value": "300"
+            }
+          ],
+          "fields": [
+            {
+              "purpose": "market-product-id",
+              "source": "structured-data",
+              "value": "COUPANG-FIXTURE-002"
+            },
+            {
+              "purpose": "title",
+              "source": "visible-text",
+              "value": "Synthetic Storage Bin"
+            }
+          ],
+          "body": {
+            "kind": "raw-body",
+            "serialization": "not-persisted",
+            "redaction": "html-and-script-content-excluded"
+          },
+          "credentialBoundary": {
+            "cookies": "not-collected",
+            "credentials": "not-collected",
+            "sessionMaterial": "metadata-only"
+          }
+        }
+      ],
+      "normalized": {
+        "kind": "fixture-collector-result",
+        "schemaVersion": "2026-05-07.wbs-12",
+        "jobId": "job-fixture-coupang-partial",
+        "requestId": "req-fixture-coupang-partial",
+        "correlationId": "corr-fixture-coupang-partial",
+        "sourceType": "fixture",
+        "fixture": {
+          "kind": "fixture-provenance",
+          "fixtureId": "deterministic-collector-fixtures",
+          "revision": "wbs-13.2026-05-07",
+          "source": "synthetic",
+          "containsSecrets": false,
+          "containsSessionMaterial": false
+        },
+        "result": {
+          "kind": "collector-result",
+          "status": "partial",
+          "schemaVersion": "2026-05-07.wbs-12",
+          "jobId": "job-fixture-coupang-partial",
+          "market": "coupang",
+          "products": [
+            {
+              "kind": "normalized-product",
+              "schemaVersion": "2026-05-07.wbs-12",
+              "productId": "normalized-fixture-coupang-002",
+              "source": {
+                "market": "coupang",
+                "marketProductId": "COUPANG-FIXTURE-002",
+                "collectedAt": "2026-05-07T00:00:00.000Z",
+                "canonicalUrl": "https://fixture.invalid/coupang/products/COUPANG-FIXTURE-002"
+              },
+              "title": "Synthetic Storage Bin",
+              "categoryPath": ["Fixtures", "Organization"],
+              "offer": {
+                "price": {
+                  "amountMinor": 25900,
+                  "currency": "KRW"
+                },
+                "availability": "limited"
+              },
+              "images": [],
+              "attributes": [
+                {
+                  "name": "fixtureSource",
+                  "value": "synthetic",
+                  "source": "derived"
+                }
+              ]
+            }
+          ],
+          "failures": [
+            {
+              "kind": "partial-failure",
+              "reason": "rate-limited",
+              "severity": "recoverable",
+              "message": "Synthetic retry-after fixture; no network request was made.",
+              "occurredAt": "2026-05-07T00:00:00.000Z",
+              "location": {
+                "kind": "market",
+                "market": "coupang"
+              },
+              "retry": {
+                "kind": "retry-state",
+                "status": "scheduled",
+                "attempt": 1,
+                "runAfter": "2026-05-07T00:05:00.000Z"
+              }
+            }
+          ],
+          "stats": {
+            "requestedCount": 2,
+            "collectedCount": 1,
+            "skippedCount": 1,
+            "failedCount": 1
+          },
+          "completedAt": "2026-05-07T00:00:05.000Z"
+        },
+        "completedAt": "2026-05-07T00:00:05.000Z"
+      }
+    },
+    {
+      "kind": "deterministic-fixture-collector-example",
+      "provenanceNote": "Synthetic unsupported-market fixture; it has no raw snapshot because no marketplace page is accessed.",
+      "input": {
+        "kind": "fixture-collector-input",
+        "schemaVersion": "2026-05-07.wbs-12",
+        "jobId": "job-fixture-unsupported-market",
+        "requestId": "req-fixture-unsupported-market",
+        "correlationId": "corr-fixture-unsupported-market",
+        "sourceType": "fixture",
+        "fixture": {
+          "kind": "fixture-provenance",
+          "fixtureId": "deterministic-collector-fixtures",
+          "revision": "wbs-13.2026-05-07",
+          "source": "synthetic",
+          "containsSecrets": false,
+          "containsSessionMaterial": false
+        },
+        "seed": {
+          "kind": "market-product-id",
+          "market": "unknown",
+          "marketProductId": "UNKNOWN-FIXTURE-003"
+        },
+        "scope": {
+          "markets": ["unknown"],
+          "locale": "ko-KR",
+          "currency": "KRW",
+          "maxProducts": 1
+        },
+        "requestedAt": "2026-05-07T00:00:00.000Z"
+      },
+      "raw": [],
+      "normalized": {
+        "kind": "fixture-collector-result",
+        "schemaVersion": "2026-05-07.wbs-12",
+        "jobId": "job-fixture-unsupported-market",
+        "requestId": "req-fixture-unsupported-market",
+        "correlationId": "corr-fixture-unsupported-market",
+        "sourceType": "fixture",
+        "fixture": {
+          "kind": "fixture-provenance",
+          "fixtureId": "deterministic-collector-fixtures",
+          "revision": "wbs-13.2026-05-07",
+          "source": "synthetic",
+          "containsSecrets": false,
+          "containsSessionMaterial": false
+        },
+        "result": {
+          "kind": "collector-result",
+          "status": "failed",
+          "schemaVersion": "2026-05-07.wbs-12",
+          "jobId": "job-fixture-unsupported-market",
+          "market": "unknown",
+          "failures": [
+            {
+              "kind": "partial-failure",
+              "reason": "unsupported-market",
+              "severity": "fatal",
+              "message": "Synthetic unsupported-market fixture; no network request was made.",
+              "occurredAt": "2026-05-07T00:00:00.000Z",
+              "location": {
+                "kind": "market",
+                "market": "unknown"
+              },
+              "retry": {
+                "kind": "retry-state",
+                "status": "not-retryable",
+                "reason": "fatal-error"
+              }
+            }
+          ],
+          "stats": {
+            "requestedCount": 1,
+            "collectedCount": 0,
+            "skippedCount": 1,
+            "failedCount": 1
+          },
+          "completedAt": "2026-05-07T00:00:05.000Z"
+        },
+        "completedAt": "2026-05-07T00:00:05.000Z"
+      }
+    }
+  ]
+}

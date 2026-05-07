@@ -489,22 +489,33 @@ Target files:
 - `packages/collectors/src/index.ts`
 - `packages/collectors/fixtures/deterministic-results.json`
 - `packages/collectors/test/fixture-contract.test.mjs`
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
 
 Goal:
 Add deterministic collector fixture data and contract checks that exercise collector result shapes without live crawling.
 
 Required behavior:
 - Use synthetic or sanitized fixture data only.
+- Add deterministic fixture collector input/output examples.
+- Validate fixture collector results against shared contracts from `packages/contracts`.
 - Keep raw capture metadata separate from normalized collector results.
-- Represent blocked-session/rate-limit/unsupported outcomes as typed fixture failures.
+- Represent rate-limit and unsupported outcomes as typed fixture failures.
 - Do not add marketplace selectors, real crawling, browser automation, login, session extraction, cookies, tokens, credentials, or external API calls.
 
 Validation commands:
 - `pnpm --filter @project/collectors typecheck`
+- `pnpm --filter @project/collectors test`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
 
 Expected evidence:
 - Changed files
-- Fixture provenance and contract summary
+- Fixture source/provenance note
+- Contract checks added
 - Commands run and PASS/FAIL results
 - Remaining risks or blockers
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.

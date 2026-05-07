@@ -1,7 +1,12 @@
 import {
+  collectorFailureReasons,
   contractSchemaVersion,
+  marketIds,
   type CollectorFailureReason,
   type CorrelationId,
+  type FixtureCollectorInput,
+  type FixtureCollectorResult,
+  type FixtureProvenance,
   type IsoDateTimeString,
   type JobId,
   type LocalOnlySessionBoundaryMarker,
@@ -359,4 +364,456 @@ export function createFailedCollectorResult(
     },
     completedAt,
   };
+}
+
+export type DeterministicFixtureCollectorExample = {
+  readonly kind: "deterministic-fixture-collector-example";
+  readonly provenanceNote: string;
+  readonly input: FixtureCollectorInput;
+  readonly raw: readonly RawCollectorSnapshot[];
+  readonly normalized: FixtureCollectorResult;
+};
+
+const deterministicFixtureProvenance: FixtureProvenance = {
+  kind: "fixture-provenance",
+  fixtureId: "deterministic-collector-fixtures",
+  revision: "wbs-13.2026-05-07",
+  source: "synthetic",
+  containsSecrets: false,
+  containsSessionMaterial: false,
+};
+
+const deterministicRequestedAt = "2026-05-07T00:00:00.000Z";
+const deterministicCompletedAt = "2026-05-07T00:00:05.000Z";
+
+const retryableFixtureBackoff: RetryState = {
+  kind: "retry-state",
+  status: "scheduled",
+  attempt: 1,
+  runAfter: "2026-05-07T00:05:00.000Z",
+};
+
+const fatalFixtureStop: RetryState = {
+  kind: "retry-state",
+  status: "not-retryable",
+  reason: "fatal-error",
+};
+
+export const deterministicFixtureCollectorExamples = [
+  {
+    kind: "deterministic-fixture-collector-example",
+    provenanceNote:
+      "Synthetic fixture authored for WBS-13; it uses reserved fixture.invalid URLs and contains no marketplace data, secrets, cookies, tokens, credentials, or session material.",
+    input: {
+      kind: "fixture-collector-input",
+      schemaVersion: contractSchemaVersion,
+      jobId: "job-fixture-naver-success",
+      requestId: "req-fixture-naver-success",
+      correlationId: "corr-fixture-naver-success",
+      sourceType: "fixture",
+      fixture: deterministicFixtureProvenance,
+      seed: {
+        kind: "keyword",
+        value: "synthetic desk lamp",
+      },
+      scope: {
+        markets: ["naver"],
+        locale: "ko-KR",
+        currency: "KRW",
+        maxProducts: 1,
+      },
+      requestedAt: deterministicRequestedAt,
+    },
+    raw: [
+      {
+        kind: "collector-raw-snapshot",
+        schemaVersion: contractSchemaVersion,
+        jobId: "job-fixture-naver-success",
+        market: "naver",
+        capturedAt: deterministicRequestedAt,
+        entry: {
+          kind: "search-results",
+          url: "https://fixture.invalid/naver/search/synthetic-desk-lamp",
+          market: "naver",
+        },
+        statusCode: 200,
+        headers: [
+          {
+            name: "content-type",
+            value: "text/html; charset=utf-8",
+          },
+        ],
+        fields: [
+          {
+            purpose: "market-product-id",
+            source: "structured-data",
+            value: "NAVER-FIXTURE-001",
+          },
+          {
+            purpose: "title",
+            source: "visible-text",
+            value: "Synthetic Desk Lamp",
+          },
+          {
+            purpose: "price",
+            source: "visible-text",
+            value: "129900 KRW",
+          },
+          {
+            purpose: "canonical-url",
+            source: "metadata",
+            value: "https://fixture.invalid/naver/products/NAVER-FIXTURE-001",
+          },
+        ],
+        body: {
+          kind: "raw-body",
+          serialization: "not-persisted",
+          redaction: "html-and-script-content-excluded",
+        },
+        credentialBoundary: {
+          cookies: "not-collected",
+          credentials: "not-collected",
+          sessionMaterial: "metadata-only",
+        },
+      },
+    ],
+    normalized: {
+      kind: "fixture-collector-result",
+      schemaVersion: contractSchemaVersion,
+      jobId: "job-fixture-naver-success",
+      requestId: "req-fixture-naver-success",
+      correlationId: "corr-fixture-naver-success",
+      sourceType: "fixture",
+      fixture: deterministicFixtureProvenance,
+      result: {
+        kind: "collector-result",
+        status: "success",
+        schemaVersion: contractSchemaVersion,
+        jobId: "job-fixture-naver-success",
+        market: "naver",
+        products: [
+          {
+            kind: "normalized-product",
+            schemaVersion: contractSchemaVersion,
+            productId: "normalized-fixture-naver-001",
+            source: {
+              market: "naver",
+              marketProductId: "NAVER-FIXTURE-001",
+              collectedAt: deterministicRequestedAt,
+              canonicalUrl: "https://fixture.invalid/naver/products/NAVER-FIXTURE-001",
+            },
+            title: "Synthetic Desk Lamp",
+            brand: "Autometa Fixture",
+            categoryPath: ["Fixtures", "Lighting"],
+            offer: {
+              price: {
+                amountMinor: 129900,
+                currency: "KRW",
+              },
+              availability: "in-stock",
+              seller: {
+                sellerId: "fixture-seller-001",
+                name: "Fixture Seller",
+              },
+            },
+            images: [
+              {
+                url: "https://fixture.invalid/assets/naver-fixture-001.png",
+                role: "primary",
+                altText: "Synthetic fixture product image",
+              },
+            ],
+            attributes: [
+              {
+                name: "fixtureSource",
+                value: "synthetic",
+                source: "derived",
+              },
+            ],
+          },
+        ],
+        stats: {
+          requestedCount: 1,
+          collectedCount: 1,
+          skippedCount: 0,
+          failedCount: 0,
+        },
+        completedAt: deterministicCompletedAt,
+      },
+      completedAt: deterministicCompletedAt,
+    },
+  },
+  {
+    kind: "deterministic-fixture-collector-example",
+    provenanceNote:
+      "Synthetic partial fixture for rate-limit handling; raw metadata is sanitized and normalized output carries the typed partial failure.",
+    input: {
+      kind: "fixture-collector-input",
+      schemaVersion: contractSchemaVersion,
+      jobId: "job-fixture-coupang-partial",
+      requestId: "req-fixture-coupang-partial",
+      correlationId: "corr-fixture-coupang-partial",
+      sourceType: "fixture",
+      fixture: deterministicFixtureProvenance,
+      seed: {
+        kind: "market-product-id",
+        market: "coupang",
+        marketProductId: "COUPANG-FIXTURE-002",
+      },
+      scope: {
+        markets: ["coupang"],
+        locale: "ko-KR",
+        currency: "KRW",
+        maxProducts: 2,
+      },
+      requestedAt: deterministicRequestedAt,
+    },
+    raw: [
+      {
+        kind: "collector-raw-snapshot",
+        schemaVersion: contractSchemaVersion,
+        jobId: "job-fixture-coupang-partial",
+        market: "coupang",
+        capturedAt: deterministicRequestedAt,
+        entry: {
+          kind: "product-detail",
+          url: "https://fixture.invalid/coupang/products/COUPANG-FIXTURE-002",
+          market: "coupang",
+        },
+        statusCode: 429,
+        headers: [
+          {
+            name: "retry-after",
+            value: "300",
+          },
+        ],
+        fields: [
+          {
+            purpose: "market-product-id",
+            source: "structured-data",
+            value: "COUPANG-FIXTURE-002",
+          },
+          {
+            purpose: "title",
+            source: "visible-text",
+            value: "Synthetic Storage Bin",
+          },
+        ],
+        body: {
+          kind: "raw-body",
+          serialization: "not-persisted",
+          redaction: "html-and-script-content-excluded",
+        },
+        credentialBoundary: {
+          cookies: "not-collected",
+          credentials: "not-collected",
+          sessionMaterial: "metadata-only",
+        },
+      },
+    ],
+    normalized: {
+      kind: "fixture-collector-result",
+      schemaVersion: contractSchemaVersion,
+      jobId: "job-fixture-coupang-partial",
+      requestId: "req-fixture-coupang-partial",
+      correlationId: "corr-fixture-coupang-partial",
+      sourceType: "fixture",
+      fixture: deterministicFixtureProvenance,
+      result: {
+        kind: "collector-result",
+        status: "partial",
+        schemaVersion: contractSchemaVersion,
+        jobId: "job-fixture-coupang-partial",
+        market: "coupang",
+        products: [
+          {
+            kind: "normalized-product",
+            schemaVersion: contractSchemaVersion,
+            productId: "normalized-fixture-coupang-002",
+            source: {
+              market: "coupang",
+              marketProductId: "COUPANG-FIXTURE-002",
+              collectedAt: deterministicRequestedAt,
+              canonicalUrl: "https://fixture.invalid/coupang/products/COUPANG-FIXTURE-002",
+            },
+            title: "Synthetic Storage Bin",
+            categoryPath: ["Fixtures", "Organization"],
+            offer: {
+              price: {
+                amountMinor: 25900,
+                currency: "KRW",
+              },
+              availability: "limited",
+            },
+            images: [],
+            attributes: [
+              {
+                name: "fixtureSource",
+                value: "synthetic",
+                source: "derived",
+              },
+            ],
+          },
+        ],
+        failures: [
+          {
+            kind: "partial-failure",
+            reason: "rate-limited",
+            severity: "recoverable",
+            message: "Synthetic retry-after fixture; no network request was made.",
+            occurredAt: deterministicRequestedAt,
+            location: {
+              kind: "market",
+              market: "coupang",
+            },
+            retry: retryableFixtureBackoff,
+          },
+        ],
+        stats: {
+          requestedCount: 2,
+          collectedCount: 1,
+          skippedCount: 1,
+          failedCount: 1,
+        },
+        completedAt: deterministicCompletedAt,
+      },
+      completedAt: deterministicCompletedAt,
+    },
+  },
+  {
+    kind: "deterministic-fixture-collector-example",
+    provenanceNote:
+      "Synthetic unsupported-market fixture; it has no raw snapshot because no marketplace page is accessed.",
+    input: {
+      kind: "fixture-collector-input",
+      schemaVersion: contractSchemaVersion,
+      jobId: "job-fixture-unsupported-market",
+      requestId: "req-fixture-unsupported-market",
+      correlationId: "corr-fixture-unsupported-market",
+      sourceType: "fixture",
+      fixture: deterministicFixtureProvenance,
+      seed: {
+        kind: "market-product-id",
+        market: "unknown",
+        marketProductId: "UNKNOWN-FIXTURE-003",
+      },
+      scope: {
+        markets: ["unknown"],
+        locale: "ko-KR",
+        currency: "KRW",
+        maxProducts: 1,
+      },
+      requestedAt: deterministicRequestedAt,
+    },
+    raw: [],
+    normalized: {
+      kind: "fixture-collector-result",
+      schemaVersion: contractSchemaVersion,
+      jobId: "job-fixture-unsupported-market",
+      requestId: "req-fixture-unsupported-market",
+      correlationId: "corr-fixture-unsupported-market",
+      sourceType: "fixture",
+      fixture: deterministicFixtureProvenance,
+      result: {
+        kind: "collector-result",
+        status: "failed",
+        schemaVersion: contractSchemaVersion,
+        jobId: "job-fixture-unsupported-market",
+        market: "unknown",
+        failures: [
+          {
+            kind: "partial-failure",
+            reason: "unsupported-market",
+            severity: "fatal",
+            message: "Synthetic unsupported-market fixture; no network request was made.",
+            occurredAt: deterministicRequestedAt,
+            location: {
+              kind: "market",
+              market: "unknown",
+            },
+            retry: fatalFixtureStop,
+          },
+        ],
+        stats: {
+          requestedCount: 1,
+          collectedCount: 0,
+          skippedCount: 1,
+          failedCount: 1,
+        },
+        completedAt: deterministicCompletedAt,
+      },
+      completedAt: deterministicCompletedAt,
+    },
+  },
+] as const satisfies readonly DeterministicFixtureCollectorExample[];
+
+export const deterministicFixtureCollectorInputs = deterministicFixtureCollectorExamples.map(
+  (example) => example.input,
+) satisfies readonly FixtureCollectorInput[];
+
+export const deterministicFixtureCollectorResults = deterministicFixtureCollectorExamples.map(
+  (example) => example.normalized,
+) satisfies readonly FixtureCollectorResult[];
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+export function isFixtureCollectorResultContract(value: unknown): value is FixtureCollectorResult {
+  if (!isRecord(value) || value.kind !== "fixture-collector-result") {
+    return false;
+  }
+
+  if (
+    value.schemaVersion !== contractSchemaVersion ||
+    value.sourceType !== "fixture" ||
+    typeof value.jobId !== "string" ||
+    typeof value.requestId !== "string" ||
+    typeof value.correlationId !== "string" ||
+    typeof value.completedAt !== "string" ||
+    !isRecord(value.fixture) ||
+    value.fixture.containsSecrets !== false ||
+    value.fixture.containsSessionMaterial !== false ||
+    !isRecord(value.result)
+  ) {
+    return false;
+  }
+
+  const result = value.result;
+  if (
+    result.kind !== "collector-result" ||
+    result.schemaVersion !== contractSchemaVersion ||
+    typeof result.jobId !== "string" ||
+    typeof result.market !== "string" ||
+    !marketIds.includes(result.market as (typeof marketIds)[number]) ||
+    typeof result.completedAt !== "string" ||
+    !isRecord(result.stats)
+  ) {
+    return false;
+  }
+
+  if (result.status === "success") {
+    return Array.isArray(result.products) && !("failures" in result);
+  }
+
+  if (result.status === "partial") {
+    return (
+      Array.isArray(result.products) &&
+      Array.isArray(result.failures) &&
+      result.failures.every(isFixturePartialFailureContract)
+    );
+  }
+
+  if (result.status === "failed") {
+    return Array.isArray(result.failures) && result.failures.every(isFixturePartialFailureContract);
+  }
+
+  return false;
+}
+
+function isFixturePartialFailureContract(value: unknown): value is PartialFailure {
+  if (!isRecord(value) || value.kind !== "partial-failure" || typeof value.reason !== "string") {
+    return false;
+  }
+
+  return collectorFailureReasons.includes(value.reason as (typeof collectorFailureReasons)[number]);
 }
