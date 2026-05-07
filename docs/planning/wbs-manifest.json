@@ -540,17 +540,50 @@
       ],
       "target_files": [
         "packages/core/src/index.ts",
-        "packages/core/test/pipeline-fixture.test.mjs"
+        "packages/core/test/pipeline-fixture.test.mjs",
+        "packages/collectors/fixtures/deterministic-results.json",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
-        "pnpm --filter @project/core typecheck"
+        "pnpm --filter @project/core typecheck",
+        "pnpm --filter @project/core test",
+        "pnpm --filter @project/collectors test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
       ],
       "depends_on": [
         "WBS-13"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, fixture validation summary, blockers, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Validated deterministic core pipeline input and output envelopes against WBS-13 fixture collector results while preserving the raw/normalized split.",
+        "validation": "pnpm --filter @project/core typecheck PASS; pnpm --filter @project/core test PASS; pnpm --filter @project/collectors test PASS; validate-planning PASS; validate-dev-flow PASS; pnpm validate:all PASS; git diff --check PASS",
+        "changed_files": [
+          "packages/core/src/index.ts",
+          "packages/core/test/pipeline-fixture.test.mjs",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "core_validation_summary": [
+          "CorePipelineInput keeps fixture collector inputs, sanitized raw snapshots, and normalized FixtureCollectorResult values in separate fields.",
+          "normalizeFixtureCollectorResult, validateCorePipelineInput, validateCorePipelineResult, and runDeterministicSourcingPipeline reject invalid fixture shapes with typed error envelopes.",
+          "CorePipelineResult now includes deterministic status and sourcing-job-result-summary fields plus typed progress/log/failure events across collect, normalize, filter, dedupe, enrich, image_search_ready, save_ready, and summarize."
+        ],
+        "risks": [
+          "Fixture-only validation consumes WBS-13 examples; live crawling, browser automation, session/cookie/token handling, credential handling, and external APIs remain out of scope.",
+          "Core package tests use a test-local Node ESM resolver for the existing extensionless workspace source import in built core output."
+        ],
+        "rollback": "Revert the WBS-14 core source, core fixture test, and planning evidence changes to restore the pre-WBS-14 state."
+      }
     },
     {
       "id": "WBS-15",

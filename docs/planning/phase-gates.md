@@ -106,3 +106,24 @@ Fixture provenance: the WBS-13 fixture set is synthetic clean-room data using
 reserved `fixture.invalid` URLs. It contains no marketplace data, secrets,
 cookies, tokens, credentials, session material, browser automation, live
 crawling, or external API output.
+
+## WBS-14 Core Fixture Validation Evidence
+
+WBS-14 is complete when the core pipeline validates deterministic input and
+output envelopes against the WBS-13 fixture collector results without adding
+external IO. The completed core-validation slice adds:
+
+- `CorePipelineInput`, `CorePipelineStatus`, and `CorePipelineSummary`.
+- `normalizeFixtureCollectorResult`, `validateCorePipelineInput`,
+  `validateCorePipelineResult`, and `runDeterministicSourcingPipeline`.
+- Deterministic status/summary fields on `CorePipelineResult`.
+- Fixture tests proving accepted collector fixtures, rejected invalid fixture
+  shape, deterministic output, expected summary/status fields, typed
+  progress/log/failure events, and preserved partial failures.
+
+The raw/normalized split remains explicit: sanitized raw snapshots are accepted
+only on `CorePipelineInput.rawSnapshots`, while normalized fixture collector
+results remain separate under `CorePipelineInput.collectorResults`; core output
+does not embed raw metadata. This gate remains fixture-only: no live crawling,
+browser automation, login/session/cookie/token handling, credential handling,
+external API calls, secrets, or copied reference source/assets are allowed.

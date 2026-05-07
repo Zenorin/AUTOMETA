@@ -525,7 +525,7 @@ Expected evidence:
 
 ```text
 Read AGENTS.md first.
-Use $project-core-pipeline $consistency-guard.
+Use $planning-and-task-breakdown $consistency-guard $project-core-pipeline.
 
 Target workstream: project-core-pipeline
 Target module path: packages/core
@@ -533,18 +533,34 @@ Target module path: packages/core
 Target files:
 - `packages/core/src/index.ts`
 - `packages/core/test/pipeline-fixture.test.mjs`
+- `packages/collectors/fixtures/deterministic-results.json`
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
 
 Goal:
 Validate the core pipeline scaffold against deterministic collector fixture results.
 
 Required behavior:
+- Consume WBS-13 deterministic collector fixture results.
+- Preserve raw/normalized split.
+- Add deterministic core pipeline input/output validation.
+- Use shared contract vocabulary from `packages/contracts`.
 - Validate input/output envelopes for collect, normalize, filter, dedupe, enrich, image_search_ready, save_ready, and summarize.
 - Preserve partial failures and typed progress/log events.
 - Keep cancel/retry readiness markers explicit.
-- Do not add external IO, browser automation, marketplace scraping, login/session/cookie/token/credential handling, or mock-success fallback.
+- Keep all logic fixture-only.
+- Do not add external IO, browser automation, marketplace scraping, login/session/cookie/token/credential handling, secrets, or mock-success fallback.
 
 Validation commands:
 - `pnpm --filter @project/core typecheck`
+- `pnpm --filter @project/core test`
+- `pnpm --filter @project/collectors test`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
 
 Expected evidence:
 - Changed files

@@ -1,19 +1,27 @@
 import {
+  collectorFailureReasons,
   contractSchemaVersion,
   type ApiErrorCode,
   type CorrelationId,
   type ErrorEnvelope,
+  type FixtureCollectorInput,
+  type FixtureCollectorResult,
+  type FixtureProvenance,
   type IsoDateTimeString,
   type JobId,
+  type MarketId,
   type MarketCollectorResult,
   type NormalizedProduct,
   type PartialFailure,
+  type RequestId,
   type RetryState,
   type SourcingRequest,
+  type SourcingJobResultSummary,
 } from "@project/contracts/src/index";
 import type {
   CollectorContract,
   CollectorExecutionResult,
+  RawCollectorSnapshot,
   SupportedCollectorMarket,
 } from "@project/collectors/src/index";
 
@@ -43,6 +51,8 @@ export const corePipelineStates = [
 
 export type CorePipelineState = (typeof corePipelineStates)[number];
 
+export type CorePipelineStatus = "completed" | "partial_failure" | "failed" | "cancelled";
+
 export type CoreCancelReadiness =
   | {
       readonly kind: "core-cancel-readiness";
@@ -66,6 +76,12 @@ export type CoreRetryReadiness =
       readonly kind: "core-retry-readiness";
       readonly status: "retryable";
       readonly retry: RetryState;
+      readonly retryStages: readonly CorePipelineStage[];
+    }
+  | {
+      readonly kind: "core-retry-readiness";
+      readonly status: "scheduled";
+      readonly retry: Extract<RetryState, { readonly status: "scheduled" }>;
       readonly retryStages: readonly CorePipelineStage[];
     };
 
@@ -153,10 +169,16 @@ export type CorePipelineSnapshot = {
   readonly updatedAt: IsoDateTimeString;
 };
 
+export type CorePipelineSummary = Omit<SourcingJobResultSummary, "status"> & {
+  readonly status: CorePipelineStatus;
+};
+
 export type CorePipelineSuccessResult = {
   readonly kind: "core-pipeline-result";
   readonly ok: true;
+  readonly status: "completed";
   readonly state: "completed";
+  readonly summary: CorePipelineSummary;
   readonly snapshot: CorePipelineSnapshot;
   readonly collectorResults: readonly MarketCollectorResult[];
   readonly products: readonly NormalizedProduct[];
@@ -166,7 +188,9 @@ export type CorePipelineSuccessResult = {
 export type CorePipelineFailureResult = {
   readonly kind: "core-pipeline-result";
   readonly ok: false;
+  readonly status: Exclude<CorePipelineStatus, "completed">;
   readonly state: "partial_failure" | "failed" | "cancelled";
+  readonly summary: CorePipelineSummary;
   readonly snapshot: CorePipelineSnapshot;
   readonly collectorResults: readonly MarketCollectorResult[];
   readonly products: readonly NormalizedProduct[];
@@ -176,6 +200,35 @@ export type CorePipelineFailureResult = {
 };
 
 export type CorePipelineResult = CorePipelineSuccessResult | CorePipelineFailureResult;
+
+export type CorePipelineInput = {
+  readonly kind: "core-pipeline-input";
+  readonly schemaVersion: typeof contractSchemaVersion;
+  readonly jobId: JobId;
+  readonly requestId: RequestId;
+  readonly correlationId: CorrelationId;
+  readonly requestedAt: IsoDateTimeString;
+  readonly completedAt: IsoDateTimeString;
+  readonly sourceType: "fixture";
+  readonly fixture: FixtureProvenance;
+  readonly collectorInputs: readonly FixtureCollectorInput[];
+  readonly rawSnapshots: readonly RawCollectorSnapshot[];
+  readonly collectorResults: readonly FixtureCollectorResult[];
+};
+
+export type CorePipelineValidationSuccess<TValue> = {
+  readonly ok: true;
+  readonly value: TValue;
+};
+
+export type CorePipelineValidationFailure = {
+  readonly ok: false;
+  readonly error: ErrorEnvelope;
+};
+
+export type CorePipelineValidationResult<TValue> =
+  | CorePipelineValidationSuccess<TValue>
+  | CorePipelineValidationFailure;
 
 export type CorePipelineExecutionPlan = {
   readonly kind: "core-pipeline-execution-plan";
@@ -301,7 +354,9 @@ export function createCoreResultFromCollectorResults(
     return {
       kind: "core-pipeline-result",
       ok: false,
+      status: "partial_failure",
       state: "partial_failure",
+      summary: createCoreSummary(request.jobId, "partial_failure", collectorResults, products, partialFailures, completedAt),
       snapshot: createCoreSnapshot({
         jobId: request.jobId,
         correlationId: request.correlationId,
@@ -315,14 +370,26 @@ export function createCoreResultFromCollectorResults(
       collectorResults,
       products,
       partialFailures,
-      events,
+      events: [
+        ...events,
+        createLogEvent(
+          request.jobId,
+          request.correlationId,
+          "summarize",
+          "warn",
+          "Core pipeline completed with preserved fixture collector failures.",
+          completedAt,
+        ),
+      ],
     };
   }
 
   return {
     kind: "core-pipeline-result",
     ok: true,
+    status: "completed",
     state: "completed",
+    summary: createCoreSummary(request.jobId, "completed", collectorResults, products, [], completedAt),
     snapshot: createCoreSnapshot({
       jobId: request.jobId,
       correlationId: request.correlationId,
@@ -339,7 +406,17 @@ export function createCoreResultFromCollectorResults(
     }),
     collectorResults,
     products,
-    events: createProgressEvents(request.jobId, request.correlationId, "completed", completedAt),
+    events: [
+      ...createProgressEvents(request.jobId, request.correlationId, "completed", completedAt),
+      createLogEvent(
+        request.jobId,
+        request.correlationId,
+        "summarize",
+        "info",
+        "Core pipeline completed fixture-only validation.",
+        completedAt,
+      ),
+    ],
   };
 }
 
@@ -384,7 +461,9 @@ export function createCancelledCoreResult(
   return {
     kind: "core-pipeline-result",
     ok: false,
+    status: "cancelled",
     state: "cancelled",
+    summary: createCoreSummary(request.jobId, "cancelled", [], [], [], cancelledAt),
     snapshot,
     collectorResults: [],
     products: [],
@@ -406,6 +485,215 @@ export function createCancelledCoreResult(
   };
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+export function normalizeFixtureCollectorResult(
+  value: unknown,
+  correlationId = "unknown-correlation",
+): CorePipelineValidationResult<FixtureCollectorResult> {
+  if (!isFixtureCollectorResult(value)) {
+    return {
+      ok: false,
+      error: createCoreError(
+        "validation-failed",
+        correlationId,
+        "Fixture collector result does not match the shared fixture collector contract.",
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    value,
+  };
+}
+
+export function validateCorePipelineInput(value: unknown): CorePipelineValidationResult<CorePipelineInput> {
+  const correlationId = readCorrelationId(value);
+
+  if (!isRecord(value) || value.kind !== "core-pipeline-input") {
+    return {
+      ok: false,
+      error: createCoreError("validation-failed", correlationId, "Core pipeline input envelope is invalid."),
+    };
+  }
+
+  if (
+    value.schemaVersion !== contractSchemaVersion ||
+    value.sourceType !== "fixture" ||
+    typeof value.jobId !== "string" ||
+    typeof value.requestId !== "string" ||
+    typeof value.correlationId !== "string" ||
+    typeof value.requestedAt !== "string" ||
+    typeof value.completedAt !== "string" ||
+    !isFixtureProvenance(value.fixture) ||
+    !Array.isArray(value.collectorInputs) ||
+    !Array.isArray(value.rawSnapshots) ||
+    !Array.isArray(value.collectorResults) ||
+    value.collectorInputs.length === 0 ||
+    value.collectorResults.length === 0
+  ) {
+    return {
+      ok: false,
+      error: createCoreError(
+        "validation-failed",
+        correlationId,
+        "Core pipeline input requires fixture-only collector inputs, raw snapshots, and normalized results.",
+      ),
+    };
+  }
+
+  if (!value.collectorInputs.every(isFixtureCollectorInput)) {
+    return {
+      ok: false,
+      error: createCoreError("validation-failed", correlationId, "Core pipeline input contains invalid fixture input."),
+    };
+  }
+
+  if (!value.rawSnapshots.every(isRawSnapshotBoundarySafe)) {
+    return {
+      ok: false,
+      error: createCoreError(
+        "validation-failed",
+        correlationId,
+        "Core pipeline input raw snapshots must stay sanitized and credential-free.",
+      ),
+    };
+  }
+
+  const normalizedResults = value.collectorResults.map((result) =>
+    normalizeFixtureCollectorResult(result, correlationId),
+  );
+  const invalidResult = normalizedResults.find((result) => !result.ok);
+  if (invalidResult !== undefined && !invalidResult.ok) {
+    return invalidResult;
+  }
+
+  const inputJobIds = new Set(value.collectorInputs.map((input) => input.jobId));
+  const missingInput = value.collectorResults.find((result) => !inputJobIds.has(result.jobId));
+  if (missingInput !== undefined) {
+    return {
+      ok: false,
+      error: createCoreError(
+        "validation-failed",
+        value.correlationId,
+        `Core pipeline input is missing fixture collector input for ${missingInput.jobId}.`,
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    value: value as CorePipelineInput,
+  };
+}
+
+export function validateCorePipelineResult(value: unknown): CorePipelineValidationResult<CorePipelineResult> {
+  const correlationId = readCorrelationId(value);
+
+  if (!isRecord(value) || value.kind !== "core-pipeline-result") {
+    return {
+      ok: false,
+      error: createCoreError("validation-failed", correlationId, "Core pipeline result envelope is invalid."),
+    };
+  }
+
+  if (
+    typeof value.ok !== "boolean" ||
+    !isCorePipelineStatus(value.status) ||
+    value.state !== value.status ||
+    !isCoreSummary(value.summary) ||
+    !isRecord(value.snapshot) ||
+    !Array.isArray(value.collectorResults) ||
+    !Array.isArray(value.products) ||
+    !Array.isArray(value.events)
+  ) {
+    return {
+      ok: false,
+      error: createCoreError(
+        "validation-failed",
+        correlationId,
+        "Core pipeline result is missing deterministic status, summary, snapshot, products, or events.",
+      ),
+    };
+  }
+
+  if (!value.collectorResults.every(isMarketCollectorResult)) {
+    return {
+      ok: false,
+      error: createCoreError("validation-failed", correlationId, "Core pipeline result has invalid collector results."),
+    };
+  }
+
+  const progressStages = new Set(
+    value.events
+      .filter((event): event is CorePipelineProgressEvent =>
+        isRecord(event) && event.kind === "core-pipeline-progress" && typeof event.stage === "string",
+      )
+      .map((event) => event.stage),
+  );
+  const hasAllStageProgress = corePipelineStages.every((stage) => progressStages.has(stage));
+  const hasLogEvent = value.events.some((event) => isRecord(event) && event.kind === "core-pipeline-log");
+
+  if (!hasAllStageProgress || !hasLogEvent) {
+    return {
+      ok: false,
+      error: createCoreError(
+        "validation-failed",
+        correlationId,
+        "Core pipeline result must include typed progress for every stage and at least one typed log event.",
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    value: value as CorePipelineResult,
+  };
+}
+
+export function runDeterministicSourcingPipeline(input: CorePipelineInput): CorePipelineResult | ErrorEnvelope {
+  const validated = validateCorePipelineInput(input);
+  if (!validated.ok) {
+    return validated.error;
+  }
+
+  const firstCollectorInput = validated.value.collectorInputs[0];
+  const request: CorePipelineOrchestrationRequest = {
+    kind: "core-pipeline-orchestration-request",
+    schemaVersion: contractSchemaVersion,
+    jobId: validated.value.jobId,
+    correlationId: validated.value.correlationId,
+    requestedAt: validated.value.requestedAt,
+    sourcing: {
+      kind: "sourcing-request",
+      schemaVersion: contractSchemaVersion,
+      requestId: validated.value.requestId,
+      correlationId: validated.value.correlationId,
+      requestedAt: validated.value.requestedAt,
+      mode: "discover",
+      seed: firstCollectorInput.seed,
+      scope: firstCollectorInput.scope,
+      policy: {
+        consent: "user-initiated",
+        collectionMode: "public-page",
+        rateLimitProfile: "conservative",
+        allowStoredCredentials: false,
+        allowCaptchaSolving: false,
+      },
+    },
+    collectors: [],
+    expectedMarkets: collectSupportedMarkets(validated.value.collectorResults),
+  };
+
+  return createCoreResultFromCollectorResults(
+    request,
+    validated.value.collectorResults.map((result) => result.result),
+    validated.value.completedAt,
+  );
+}
+
 function createFailedCoreResult(
   request: CorePipelineOrchestrationRequest,
   collectorResults: readonly MarketCollectorResult[],
@@ -419,7 +707,9 @@ function createFailedCoreResult(
   return {
     kind: "core-pipeline-result",
     ok: false,
+    status: "failed",
     state: "failed",
+    summary: createCoreSummary(request.jobId, "failed", collectorResults, products, preservedFailures, completedAt),
     snapshot: createCoreSnapshot({
       jobId: request.jobId,
       correlationId: request.correlationId,
@@ -439,6 +729,7 @@ function createFailedCoreResult(
     partialFailures: preservedFailures,
     error,
     events: [
+      ...createProgressEvents(request.jobId, request.correlationId, "failed", completedAt),
       {
         kind: "core-pipeline-log",
         schemaVersion: contractSchemaVersion,
@@ -450,6 +741,14 @@ function createFailedCoreResult(
         level: "error",
         message: error.message,
       },
+      createLogEvent(
+        request.jobId,
+        request.correlationId,
+        "summarize",
+        "error",
+        "Core pipeline failed fixture-only validation.",
+        completedAt,
+      ),
     ],
   };
 }
@@ -530,6 +829,16 @@ function createFailureEvent(
 }
 
 function createRetryReadiness(partialFailures: readonly PartialFailure[]): CoreRetryReadiness {
+  const scheduled = partialFailures.find((failure) => failure.retry.status === "scheduled");
+  if (scheduled !== undefined && scheduled.retry.status === "scheduled") {
+    return {
+      kind: "core-retry-readiness",
+      status: "scheduled",
+      retry: scheduled.retry,
+      retryStages: ["collect", "normalize"],
+    };
+  }
+
   const retryable = partialFailures.find((failure) => failure.retry.status === "retryable");
   if (retryable === undefined || retryable.retry.status !== "retryable") {
     return {
@@ -545,6 +854,183 @@ function createRetryReadiness(partialFailures: readonly PartialFailure[]): CoreR
     retry: retryable.retry,
     retryStages: ["collect", "normalize"],
   };
+}
+
+function createCoreSummary(
+  jobId: JobId,
+  status: CorePipelineStatus,
+  collectorResults: readonly MarketCollectorResult[],
+  products: readonly NormalizedProduct[],
+  partialFailures: readonly PartialFailure[],
+  completedAt: IsoDateTimeString,
+): CorePipelineSummary {
+  return {
+    kind: "sourcing-job-result-summary",
+    jobId,
+    status,
+    markets: uniqueMarkets(collectorResults.map((result) => result.market)),
+    itemCount: products.length,
+    failureCount: partialFailures.length,
+    collectorStatuses: collectorResults.map((result) => result.status),
+    completedAt,
+  };
+}
+
+function createLogEvent(
+  jobId: JobId,
+  correlationId: CorrelationId,
+  stage: CorePipelineStage,
+  level: CorePipelineLogEvent["level"],
+  message: string,
+  emittedAt: IsoDateTimeString,
+): CorePipelineLogEvent {
+  return {
+    kind: "core-pipeline-log",
+    schemaVersion: contractSchemaVersion,
+    eventId: `${jobId}:${stage}:${level}:log`,
+    jobId,
+    correlationId,
+    emittedAt,
+    stage,
+    level,
+    message,
+  };
+}
+
+function collectSupportedMarkets(results: readonly FixtureCollectorResult[]): readonly SupportedCollectorMarket[] {
+  return uniqueMarkets(results.map((result) => result.result.market)).filter(isSupportedCollectorMarket);
+}
+
+function uniqueMarkets(markets: readonly MarketId[]): readonly MarketId[] {
+  return [...new Set(markets)];
+}
+
+function isCorePipelineStatus(value: unknown): value is CorePipelineStatus {
+  return value === "completed" || value === "partial_failure" || value === "failed" || value === "cancelled";
+}
+
+function isCoreSummary(value: unknown): value is CorePipelineSummary {
+  return (
+    isRecord(value) &&
+    value.kind === "sourcing-job-result-summary" &&
+    typeof value.jobId === "string" &&
+    isCorePipelineStatus(value.status) &&
+    Array.isArray(value.markets) &&
+    value.markets.every((market) => typeof market === "string") &&
+    typeof value.itemCount === "number" &&
+    typeof value.failureCount === "number" &&
+    Array.isArray(value.collectorStatuses)
+  );
+}
+
+function isFixtureCollectorInput(value: unknown): value is FixtureCollectorInput {
+  return (
+    isRecord(value) &&
+    value.kind === "fixture-collector-input" &&
+    value.schemaVersion === contractSchemaVersion &&
+    typeof value.jobId === "string" &&
+    typeof value.requestId === "string" &&
+    typeof value.correlationId === "string" &&
+    value.sourceType === "fixture" &&
+    isFixtureProvenance(value.fixture) &&
+    isRecord(value.seed) &&
+    isRecord(value.scope) &&
+    typeof value.requestedAt === "string"
+  );
+}
+
+function isFixtureCollectorResult(value: unknown): value is FixtureCollectorResult {
+  return (
+    isRecord(value) &&
+    value.kind === "fixture-collector-result" &&
+    value.schemaVersion === contractSchemaVersion &&
+    typeof value.jobId === "string" &&
+    typeof value.requestId === "string" &&
+    typeof value.correlationId === "string" &&
+    value.sourceType === "fixture" &&
+    isFixtureProvenance(value.fixture) &&
+    isMarketCollectorResult(value.result) &&
+    typeof value.completedAt === "string" &&
+    value.result.jobId === value.jobId
+  );
+}
+
+function isFixtureProvenance(value: unknown): value is FixtureProvenance {
+  return (
+    isRecord(value) &&
+    value.kind === "fixture-provenance" &&
+    typeof value.fixtureId === "string" &&
+    typeof value.revision === "string" &&
+    (value.source === "synthetic" || value.source === "sanitized") &&
+    value.containsSecrets === false &&
+    value.containsSessionMaterial === false
+  );
+}
+
+function isMarketCollectorResult(value: unknown): value is MarketCollectorResult {
+  if (
+    !isRecord(value) ||
+    value.kind !== "collector-result" ||
+    value.schemaVersion !== contractSchemaVersion ||
+    typeof value.jobId !== "string" ||
+    typeof value.market !== "string" ||
+    typeof value.completedAt !== "string" ||
+    !isRecord(value.stats)
+  ) {
+    return false;
+  }
+
+  if (value.status === "success") {
+    return Array.isArray(value.products) && !("failures" in value);
+  }
+
+  if (value.status === "partial") {
+    return Array.isArray(value.products) && Array.isArray(value.failures) && value.failures.every(isPartialFailure);
+  }
+
+  if (value.status === "failed") {
+    return !("products" in value) && Array.isArray(value.failures) && value.failures.every(isPartialFailure);
+  }
+
+  return false;
+}
+
+function isPartialFailure(value: unknown): value is PartialFailure {
+  return (
+    isRecord(value) &&
+    value.kind === "partial-failure" &&
+    typeof value.reason === "string" &&
+    collectorFailureReasons.includes(value.reason as (typeof collectorFailureReasons)[number]) &&
+    (value.severity === "warning" || value.severity === "recoverable" || value.severity === "fatal") &&
+    typeof value.message === "string" &&
+    typeof value.occurredAt === "string" &&
+    isRecord(value.location) &&
+    isRecord(value.retry)
+  );
+}
+
+function isRawSnapshotBoundarySafe(value: unknown): value is RawCollectorSnapshot {
+  return (
+    isRecord(value) &&
+    value.kind === "collector-raw-snapshot" &&
+    value.schemaVersion === contractSchemaVersion &&
+    typeof value.jobId === "string" &&
+    isRecord(value.body) &&
+    value.body.serialization === "not-persisted" &&
+    value.body.redaction === "html-and-script-content-excluded" &&
+    isRecord(value.credentialBoundary) &&
+    value.credentialBoundary.cookies === "not-collected" &&
+    value.credentialBoundary.credentials === "not-collected" &&
+    value.credentialBoundary.sessionMaterial === "metadata-only"
+  );
+}
+
+function isSupportedCollectorMarket(value: MarketId): value is SupportedCollectorMarket {
+  return value !== "unknown";
+}
+
+function readCorrelationId(value: unknown): CorrelationId {
+  return isRecord(value) && typeof value.correlationId === "string" ? value.correlationId : "unknown-correlation";
 }
 
 function createCoreError(
