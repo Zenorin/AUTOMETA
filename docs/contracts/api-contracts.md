@@ -148,6 +148,24 @@ The extension does not call real API endpoints, access marketplace pages,
 automate browsers, read cookies/sessions/tokens/credentials/local storage, or
 enable live collection.
 
+### Browser Session Handoff Design Boundary
+
+WBS-18 documents a local-only browser session handoff boundary for a possible
+future controlled product phase. This is design-only. It does not add contract
+fields, implementation code, browser automation, cookie/session/token capture,
+credential handling, marketplace access, external API calls, or live crawling.
+
+The current product behavior remains fixture-only. `LocalOnlyBoundaryMarker`
+and related secret/session markers are metadata-only references; they must not
+carry real secrets, credentials, cookies, tokens, sessions, browser profiles,
+local storage values, account data, or captured marketplace responses in DTOs,
+API responses, extension messages, logs, fixtures, docs, or git history.
+
+Any future implementation must be opened by a later approved WBS with explicit
+security, privacy, anti-bot compliance, clean-room, contract, test, and rollback
+evidence. Until that approval exists, unsupported live/manual sources remain
+rejected through typed errors.
+
 ### Fixture Collector References
 
 `FixtureCollectorInput` and `FixtureCollectorResult` define the fixture-only

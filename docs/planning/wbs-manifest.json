@@ -791,24 +791,62 @@
       "module_path": ".",
       "suggested_skills": [
         "planning-and-task-breakdown",
-        "privacy-boundary-review",
-        "session-boundary-security",
-        "anti-bot-compliance-check"
+        "consistency-guard"
       ],
       "target_files": [
-        "docs/architecture/local-session-handoff.md",
-        "docs/planning/phase-gates.md"
+        "docs/architecture/browser-session-handoff.md",
+        "docs/architecture/boundaries.md",
+        "docs/contracts/api-contracts.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
-        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root ."
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
+        "pnpm validate:all",
+        "git diff --check"
       ],
       "depends_on": [
         "WBS-17"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
-      "evidence": "Record changed files, commands, PASS/FAIL output, boundary decisions, blockers, remaining risks, and rollback note.",
-      "status": "todo"
+      "evidence": "Record changed files, commands, PASS/FAIL output, browser/session handoff boundary summary, forbidden behavior list, future approval gates, blockers, remaining risks, and rollback note.",
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Documented WBS-18 local-only browser session handoff boundaries as design-only guidance for future controlled product phases.",
+        "validation": "python -S tools/codex/codex_skillset_generator.py validate-planning --root . PASS; python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root . PASS; node tools/checks/cleanroom-audit.mjs PASS; pnpm validate:all PASS; git diff --check PASS",
+        "changed_files": [
+          "docs/architecture/browser-session-handoff.md",
+          "docs/architecture/boundaries.md",
+          "docs/contracts/api-contracts.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "browser_session_handoff_boundary_summary": [
+          "The current product phase remains fixture-only across API, web, extension, collectors, and core.",
+          "Browser/session handoff is documented as a future human-approved, same-device, metadata-only concept.",
+          "WBS-18 adds no implementation code, dependencies, permissions, runtime configuration, browser automation, marketplace access, live crawling, external API calls, or session extraction."
+        ],
+        "forbidden_behavior": [
+          "No Playwright, Selenium, Puppeteer, browser drivers, login automation, captcha solving, anti-bot bypassing, marketplace access, live crawling, or external API calls.",
+          "No reading, exporting, persisting, logging, committing, or transmitting cookies, sessions, tokens, credentials, local storage, browser profiles, account data, service-account files, API keys, passwords, or private keys.",
+          "No validator, clean-room audit, unsupported-source error, or fixture-only behavior weakening."
+        ],
+        "future_approval_gates": [
+          "A later approved WBS must name exact markets, user action, data categories, retention policy, and rollback owner before any implementation.",
+          "Security, privacy, anti-bot compliance, contract, test, clean-room, secret scanning, dependency, permission, and rollback evidence must pass before enabling any future implementation."
+        ],
+        "risks": [
+          "This is design-only documentation; implementation remains deferred and unsupported live/manual sources continue to be rejected.",
+          "Future phases must prove that secret/session material remains metadata-only and never enters DTOs, logs, fixtures, artifacts, or git history."
+        ],
+        "rollback": "Revert the WBS-18 architecture, contract docs, phase gate, command queue, and manifest evidence changes to restore the pre-WBS-18 state."
+      }
     },
     {
       "id": "WBS-19",

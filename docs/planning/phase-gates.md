@@ -20,7 +20,7 @@
 | backend-jobs | `cd apps/api && pytest` passes for fixture-only sourcing job create/status/progress/cancel boundaries | Real marketplace calls, hidden session handling, untyped error envelopes, ASGI/client smoke hangs hidden instead of documented, or weakened tests |
 | web-jobs | `pnpm --filter @project/web typecheck` and `pnpm --filter @project/web test` pass for sourcing job creation/status UI states | Missing loading/empty/error/partial/cancel states, API envelope mismatch, product copy that implies live crawling, or broken responsive layout |
 | extension-job-bridge | `pnpm --filter extension build` passes and extension messages remain explicitly allowed, request-correlated, and unsupported-message typed | Wildcard external trust, login/session/cookie/credential extraction, live crawling, or mock success for unsupported messages |
-| session-handoff-design | Planning/dev-flow validation passes and the local-only browser session handoff remains design-only | Any implementation of cookie/session/token capture, credential storage, login automation, or marketplace automation before approval |
+| session-handoff-design | Planning/dev-flow validation, clean-room audit, `pnpm validate:all`, and `git diff --check` pass; `docs/architecture/browser-session-handoff.md` documents a design-only, local-only browser/session handoff boundary with approval gates and no runtime code | Any implementation of browser automation, cookie/session/token capture, credential storage, browser profile/account data handling, marketplace access, live crawling, external API calls, or weakened clean-room validation before approval |
 | fixture-integration | `pnpm validate:all` and `node tools/checks/cleanroom-audit.mjs` pass with fixture-only end-to-end smoke evidence | Any failing module check, hidden external IO, copied source/assets, real secrets, or unclassified ASGI/TestClient integration blocker |
 
 ## WBS-10 Integration Evidence
@@ -59,7 +59,7 @@ The next development phase starts after completed WBS-11 handoff and moves from 
 | WBS-15 | backend-jobs | Add fixture-only sourcing job API boundary and tests using shared envelopes. |
 | WBS-16 | web-jobs | Add web job creation/status UI states driven by the API envelope vocabulary. |
 | WBS-17 | extension-job-bridge | Connect extension readiness messages to the sourcing job boundary without wildcard trust or session extraction. |
-| WBS-18 | session-handoff-design | Document local-only browser session handoff boundaries; design only, no implementation. |
+| WBS-18 | session-handoff-design | Document local-only browser session handoff boundaries in `docs/architecture/browser-session-handoff.md`; design only, no implementation. |
 | WBS-19 | fixture-integration | Add fixture-only integration smoke evidence across modules and keep ASGI/TestClient risk visible if it still reproduces. |
 
 Clean-room boundaries for this phase:
@@ -188,3 +188,26 @@ access. The completed extension-job-bridge slice adds:
 The extension does not call real API endpoints, access marketplace pages,
 automate browsers, read cookies/sessions/tokens/credentials/local storage, add
 secrets, or change MV3 permissions.
+
+## WBS-18 Browser Session Handoff Design Evidence
+
+WBS-18 is complete when local-only browser session handoff is documented as a
+future design boundary only. The completed session-handoff-design slice adds:
+
+- `docs/architecture/browser-session-handoff.md` as the canonical local-only
+  browser/session handoff boundary.
+- Architecture and contract wording that keeps WBS-15 through WBS-17
+  fixture-only behavior intact.
+- Explicit allowed, forbidden, and deferred behavior for any future controlled
+  product phase.
+- Future approval gates for security, privacy, anti-bot compliance, contracts,
+  tests, clean-room audit, and rollback evidence.
+
+This slice adds no implementation code, dependencies, permissions, scripts,
+browser automation, marketplace access, live crawling, external API calls,
+cookie/session/token extraction, credential handling, local storage access,
+browser profile access, account-data handling, secrets, fixtures, or runtime
+configuration. Secrets, credentials, cookies, tokens, sessions, browser
+profiles, account data, service-account files, API keys, passwords, and private
+keys must never be committed, logged, serialized, stored in fixtures, or copied
+into docs as real values.

@@ -736,25 +736,42 @@ Target workstream: project-development-bootstrap
 Target module path: .
 
 Target files:
-- `docs/architecture/local-session-handoff.md`
+- `docs/architecture/browser-session-handoff.md`
+- `docs/architecture/boundaries.md`
+- `docs/contracts/api-contracts.md`
 - `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
 
 Goal:
-Write a design-only local session handoff boundary document before any session-related implementation is considered.
+Document local-only browser session handoff boundaries for future controlled
+product phases without implementing browser automation, cookie/session
+extraction, credential handling, marketplace access, or live crawling.
 
 Required behavior:
-- Document allowed, forbidden, and approval-required boundaries.
-- Keep handoff local-only and user-controlled at the design level.
-- Explicitly keep cookies, tokens, credentials, browser profiles, login automation, and marketplace automation out of implementation scope.
+- Create or update architecture documentation for local-only browser session handoff.
+- Define allowed, forbidden, and deferred behavior.
+- Clarify that the current product phase remains fixture-only.
+- Clarify that browser/session handoff is design-only in WBS-18.
+- Clarify that no implementation code is added in this slice.
+- Clarify that secrets, credentials, cookies, tokens, sessions, browser profiles, and account data must never be committed.
+- Define approval gates required before any future browser/session implementation.
+- Define audit/evidence requirements for future phases.
 - Preserve clean-room restrictions and anti-bot boundaries.
 
 Validation commands:
 - `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
 - `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/cleanroom-audit.mjs`
+- `pnpm validate:all`
+- `git diff --check`
 
 Expected evidence:
 - Changed files
-- Boundary decision summary
+- Browser/session handoff boundary summary
+- Explicit forbidden behavior list
+- Future approval gate summary
 - Commands run and PASS/FAIL results
 - Remaining risks or blockers
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
