@@ -127,3 +127,25 @@ results remain separate under `CorePipelineInput.collectorResults`; core output
 does not embed raw metadata. This gate remains fixture-only: no live crawling,
 browser automation, login/session/cookie/token handling, credential handling,
 external API calls, secrets, or copied reference source/assets are allowed.
+
+## WBS-15 Fixture API Boundary Evidence
+
+WBS-15 is complete when the API exposes fixture-only sourcing job create,
+status, and result boundaries using shared API envelopes and deterministic
+fixture data. The completed backend-jobs slice adds:
+
+- `POST /api/v1/sourcing/jobs` for fixture-backed job creation.
+- `GET /api/v1/sourcing/jobs/{job_id}` for job status, progress, summary,
+  retry state, and typed errors.
+- `GET /api/v1/sourcing/jobs/{job_id}/result` for deterministic core pipeline
+  output derived from the WBS-13 fixture collector results.
+- Handler-level tests for health, create, status, result, invalid job ID,
+  unsupported live/external source rejection, and response secret/session field
+  exclusion.
+
+The API boundary reads only synthetic fixture JSON and keeps state in a
+deterministic in-memory fixture job record. It does not add background workers,
+live marketplace crawling, browser automation, login/session/cookie/token
+handling, credential handling, external API calls, secrets, or copied reference
+source/assets. ASGI/TestClient smoke remains a carried risk; this slice keeps
+coverage at direct handler level so hangs are not hidden.

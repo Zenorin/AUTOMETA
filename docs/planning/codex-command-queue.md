@@ -574,19 +574,33 @@ Expected evidence:
 
 ```text
 Read AGENTS.md first.
-Use $project-backend-api $api-contract-change $api-error-handling-review $backend-test-matrix.
+Use $planning-and-task-breakdown $consistency-guard $project-backend-api $api-contract-change $api-error-handling-review $backend-test-matrix.
 
 Target workstream: project-backend-api
 Target module path: apps/api
 
 Target files:
 - `apps/api/app/main.py`
-- `apps/api/tests/test_sourcing_jobs.py`
+- `apps/api/tests/*.py`
+- `packages/contracts/src/index.ts`
+- `packages/core/src/index.ts`
+- `packages/collectors/fixtures/deterministic-results.json`
+- `docs/contracts/api-contracts.md`
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
 
 Goal:
-Expose fixture-only sourcing job create/status/progress/cancel readiness through the API shell using shared contracts and typed errors.
+Implement a fixture-only sourcing job API boundary that uses the WBS-12 contracts, WBS-13 collector fixtures, and WBS-14 deterministic core pipeline output.
 
 Required behavior:
+- Add fixture-only sourcing job API routes: `POST /api/v1/sourcing/jobs`, `GET /api/v1/sourcing/jobs/{job_id}`, and `GET /api/v1/sourcing/jobs/{job_id}/result`.
+- Keep API behavior deterministic.
+- Use synthetic fixture data only.
+- Return typed API envelopes.
+- Expose job creation and job status/result boundary.
+- Preserve clean-room restrictions.
 - Use shared sourcing job DTOs and existing API/error envelope semantics.
 - Keep bounded tests for success, unsupported, validation error, and cancellation readiness paths.
 - Keep ASGI/TestClient hangs visible if they still reproduce; do not hide or skip them.
@@ -594,10 +608,18 @@ Required behavior:
 
 Validation commands:
 - `cd apps/api && pytest`
+- `pnpm --filter @project/contracts typecheck`
+- `pnpm --filter @project/core typecheck`
+- `pnpm --filter @project/collectors test`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
 
 Expected evidence:
 - Changed files
 - API boundary summary
+- Fixture-only data boundary summary
 - Commands run and PASS/FAIL results
 - Remaining risks or blockers, including ASGI/TestClient status
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.

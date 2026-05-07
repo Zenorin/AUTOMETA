@@ -600,17 +600,58 @@
       ],
       "target_files": [
         "apps/api/app/main.py",
-        "apps/api/tests/test_sourcing_jobs.py"
+        "apps/api/tests/test_health.py",
+        "apps/api/tests/test_sourcing_jobs.py",
+        "packages/contracts/src/index.ts",
+        "packages/core/src/index.ts",
+        "packages/collectors/fixtures/deterministic-results.json",
+        "docs/contracts/api-contracts.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
-        "cd apps/api && pytest"
+        "cd apps/api && pytest",
+        "pnpm --filter @project/contracts typecheck",
+        "pnpm --filter @project/core typecheck",
+        "pnpm --filter @project/collectors test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
       ],
       "depends_on": [
         "WBS-14"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, API boundary summary, blockers, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Implemented fixture-only sourcing job create, status, and result API boundaries using WBS-12 envelope vocabulary, WBS-13 fixture data, and WBS-14-style deterministic core output.",
+        "validation": "cd apps/api && pytest PASS; pnpm --filter @project/contracts typecheck PASS; pnpm --filter @project/core typecheck PASS; pnpm --filter @project/collectors test PASS; validate-planning PASS; validate-dev-flow PASS; pnpm validate:all PASS; git diff --check PASS",
+        "changed_files": [
+          "apps/api/app/main.py",
+          "apps/api/tests/test_sourcing_jobs.py",
+          "docs/contracts/api-contracts.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "api_route_summary": [
+          "POST /api/v1/sourcing/jobs creates the deterministic fixture-backed job and returns SourcingJobCreatedResponse inside ApiResponseEnvelope.",
+          "GET /api/v1/sourcing/jobs/{job_id} returns completed fixture job status, progress, result summary, retry state, and typed sourcing job errors.",
+          "GET /api/v1/sourcing/jobs/{job_id}/result returns deterministic core-pipeline-result output with progress/log/failure events and preserved partial failures.",
+          "Invalid job IDs and unsupported source types return typed ErrorEnvelope responses."
+        ],
+        "fixture_only_boundary": "The API reads only the synthetic WBS-13 deterministic fixture JSON and constructs deterministic WBS-14-style core output in memory; it does not crawl marketplaces, call external APIs, automate browsers, handle login/session/cookie/token material, or store secrets.",
+        "risks": [
+          "Tests remain direct handler tests to avoid hiding the carried ASGI/TestClient hang risk from earlier API work.",
+          "The job store is deterministic in-memory fixture state only; persistence/background workers remain deferred."
+        ],
+        "rollback": "Revert the WBS-15 API route/test and planning evidence changes to restore the pre-WBS-15 state."
+      }
     },
     {
       "id": "WBS-16",

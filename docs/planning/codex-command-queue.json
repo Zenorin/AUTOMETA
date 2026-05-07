@@ -68,7 +68,14 @@
         "api-contract-change"
       ],
       "validation_commands": [
-        "cd apps/api && pytest"
+        "cd apps/api && pytest",
+        "pnpm --filter @project/contracts typecheck",
+        "pnpm --filter @project/core typecheck",
+        "pnpm --filter @project/collectors test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
       ]
     },
     {

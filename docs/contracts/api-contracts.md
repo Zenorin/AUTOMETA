@@ -98,6 +98,26 @@ missing fixture, validation failure, cancellation, collector failure, pipeline
 failure, and unknown failure cases. These errors are data contracts; they are
 not mock-success fallbacks.
 
+### Fixture-Only Sourcing Job API
+
+WBS-15 exposes the sourcing job contract through deterministic fixture-only API
+routes:
+
+- `POST /api/v1/sourcing/jobs` accepts only `sourceType: fixture` and returns a
+  `SourcingJobCreatedResponse` inside `ApiResponseEnvelope`.
+- `GET /api/v1/sourcing/jobs/{job_id}` returns `SourcingJobStatusResponse`
+  with completed fixture progress, result summary, retry state, and typed
+  sourcing job errors.
+- `GET /api/v1/sourcing/jobs/{job_id}/result` returns the deterministic
+  WBS-14-style core pipeline result for the WBS-13 fixture collector results.
+
+This API boundary is deterministic and fixture-only. It reads the synthetic
+collector fixture set, preserves the raw/normalized split by not exposing raw
+snapshots in API result payloads, and rejects unsupported live/manual source
+types with typed `validation-failed` envelopes. It does not perform live
+marketplace crawling, browser automation, login/session/cookie/token handling,
+credential handling, external API calls, or secret storage.
+
 ### Fixture Collector References
 
 `FixtureCollectorInput` and `FixtureCollectorResult` define the fixture-only
