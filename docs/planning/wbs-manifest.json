@@ -359,7 +359,19 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Integration smoke evidence and phase gates connected across contracts, API, web, extension, collectors, and core pipeline.",
+        "validation": "pnpm validate:all PASS; validate_scaffold PASS; validate_planning PASS; validate_dev_flow PASS; workspace-check PASS; cleanroom-audit PASS",
+        "changed_files": [
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md"
+        ],
+        "risks": [
+          "Full ASGI TestClient smoke remains deferred to integration validation if the environment still hangs."
+        ],
+        "rollback": "Revert docs/planning/phase-gates.md, docs/planning/codex-command-queue.md, and docs/planning/wbs-manifest.json to restore the prior planning evidence state."
+      }
     },
     {
       "id": "WBS-11",
