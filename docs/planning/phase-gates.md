@@ -14,7 +14,7 @@
 | core-pipeline | `pnpm --filter @project/core typecheck` passes and core orchestration preserves partial failures across collect, normalize, filter, dedupe, enrich, image_search_ready, save_ready, and summarize stages | Type errors, new IO/browser/API work in core, generic failure collapse, mock-success fallback, or missing cancel/retry readiness |
 | integration | `pnpm validate:all` passes after the direct smoke checks for contracts, API, web, extension, collectors, core, scaffold, planning, dev-flow, workspace, and clean-room audit | Any failing module check; WBS-10 is not done until the failure is classified by source module and fixed without bypassing tests or weakening clean-room boundaries |
 | handoff | `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .` passes or blocker is documented | Missing evidence, path mismatch, secret exposure, or unapproved behavior deletion |
-| product-contracts | `pnpm --filter @project/contracts typecheck` passes and sourcing job DTOs/errors/events remain shared-contract first | Contract drift across API/web/extension/core, missing typed errors, mock-success fallback, secret/session fields, or unapproved feature deletion |
+| product-contracts | `pnpm --filter @project/contracts typecheck`, `pnpm --filter @project/contracts test`, planning/dev-flow validation, and `pnpm validate:all` pass; sourcing job DTOs/errors/events remain shared-contract first and fixture-safe | Contract drift across API/web/extension/core, missing typed errors, mock-success fallback, secret/session fields, external IO, live crawling, or unapproved feature deletion |
 | fixture-collectors | `pnpm --filter @project/collectors typecheck` passes and deterministic fixtures represent only synthetic or sanitized fixture data | Live marketplace crawling, copied reference data/assets, hidden session/cookie/token handling, fixture provenance gaps, or type mismatch |
 | core-validation | `pnpm --filter @project/core typecheck` passes and core input/output validation preserves partial failures using fixture collector results | Generic failure collapse, external API/browser IO in core, mock-success fallback, or fixture/result contract mismatch |
 | backend-jobs | `cd apps/api && pytest` passes for fixture-only sourcing job create/status/progress/cancel boundaries | Real marketplace calls, hidden session handling, untyped error envelopes, ASGI/client smoke hangs hidden instead of documented, or weakened tests |
@@ -68,3 +68,23 @@ Clean-room boundaries for this phase:
 - No real marketplace crawling, login automation, browser automation, or external API calls.
 - No mock-success fallback to hide unsupported messages, collector failures, pipeline failures, or API errors.
 - No real secrets in repository files, logs, fixtures, tests, or docs.
+
+## WBS-12 Contract Evidence
+
+WBS-12 is complete when the shared contracts export fixture-backed sourcing job
+vocabulary without adding runtime product behavior. The completed contract slice
+adds:
+
+- `SourcingJobId`, `SourcingJobStatus`, and `SourcingJobSourceType`
+- `SourcingJobRequest`, `SourcingJobCreatedResponse`, and
+  `SourcingJobStatusResponse`
+- `SourcingJobResultSummary`, `SourcingJobError`, and
+  `SourcingJobProgress`
+- `FixtureCollectorInput`, `FixtureCollectorResult`, `FixtureProvenance`, and
+  `NormalizedMarketItem`
+- `SourcingJobCreateApiResponse` and `SourcingJobStatusApiResponse` aliases
+  using `ApiResponseEnvelope<TData>`
+
+This gate remains fixture-safe: no live marketplace crawling, login automation,
+hidden cookie/session/token handling, credential handling, external API calls,
+secrets, or copied reference source/assets are allowed.

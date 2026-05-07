@@ -435,6 +435,10 @@ Target module path: packages/contracts
 Target files:
 - `packages/contracts/src/index.ts`
 - `docs/contracts/api-contracts.md`
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
 
 Goal:
 Expand shared contracts for fixture-only sourcing jobs before API, web, extension, collector, or core behavior is added.
@@ -458,11 +462,15 @@ Forbidden changes:
 
 Validation commands:
 - `pnpm --filter @project/contracts typecheck`
+- `pnpm --filter @project/contracts test`
 - `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
 
 Expected evidence:
 - Changed files
 - Sourcing job contract summary
+- API contract documentation updates
 - Commands run and PASS/FAIL results
 - Remaining risks or blockers
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.

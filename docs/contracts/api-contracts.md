@@ -8,7 +8,7 @@ Korean-facing UI labels.
 
 ## Schema Version
 
-- Current version: `2026-05-06.wbs-04`
+- Current version: `2026-05-07.wbs-12`
 - Export: `contractSchemaVersion`
 - Compatibility rule: add optional fields for compatible growth. Renaming,
   removing, changing discriminators, or changing enum values is breaking and
@@ -19,6 +19,12 @@ Korean-facing UI labels.
 | Contract | Purpose | Stability notes |
 | --- | --- | --- |
 | `SourcingRequest` | User-initiated sourcing input from web/API/extension into collectors and core. | Uses `SourcingSeed`, `SourcingScope`, and `SourcingPolicy`; captcha solving and stored credentials are explicitly disallowed. |
+| `SourcingJobRequest` | Fixture-backed job creation input for the next product phase. | Uses `FixtureSafeSourcingPolicy`; external network, marketplace automation, stored credentials, captcha solving, and session material are explicitly disallowed. |
+| `SourcingJobCreatedResponse` | API response data for accepted fixture-backed job creation. | Always starts at `queued`; wrapped by `ApiResponseEnvelope<SourcingJobCreatedResponse>`. |
+| `SourcingJobStatusResponse` | API response data for job status/progress/cancel/retry/result summary. | Uses explicit `SourcingJobStatus` values and typed `SourcingJobError[]`; wrapped by `ApiResponseEnvelope<SourcingJobStatusResponse>`. |
+| `FixtureCollectorInput` | Deterministic collector input for fixture-only test and smoke paths. | Requires `FixtureProvenance` and `sourceType: fixture`; it is not a live crawl request. |
+| `FixtureCollectorResult` | Deterministic collector output wrapper for fixture-only integration. | Wraps `MarketCollectorResult` so downstream modules can validate fixture output without calling marketplaces. |
+| `NormalizedMarketItem` | Job-facing normalized market item reference. | Alias of `NormalizedProduct` to avoid duplicate shapes while preserving job vocabulary. |
 | `NormalizedProduct` | Market-neutral product DTO for downstream API, web, and pipeline use. | Product facts are explicit fields or `ProductAttribute[]`; no open object payload is required. |
 | `MarketCollectorResult` | Collector output for success, partial success, or failure. | Discriminated by `status`; partial and failed results carry typed `PartialFailure[]`. |
 | `PipelineEvent` | Progress, log, and failure events emitted by core/collectors. | Discriminated by `kind`; stages are limited by `PipelineStage`. |
@@ -51,6 +57,55 @@ Korean-facing UI labels.
 - optional `LocalOnlySessionBoundaryMarker` for authenticated local sessions
 - optional `RetryState`
 
+### Sourcing Job Contracts
+
+WBS-12 introduces fixture-backed sourcing job DTOs for the next product phase.
+They are contracts only; they do not implement runtime crawling, login,
+marketplace automation, browser automation, external API calls, or credential
+handling.
+
+`SourcingJobStatus` is limited to:
+
+- `queued`
+- `running`
+- `completed`
+- `failed`
+- `cancelled`
+
+`SourcingJobRequest` captures fixture-safe job creation input:
+
+- `SourcingJobId` is the job identifier alias used by job-specific DTOs.
+- `SourcingJobSourceType` identifies the request source as `fixture`,
+  `manual-keyword`, `manual-product-url`, or `manual-market-product-id`.
+- `FixtureSafeSourcingPolicy` keeps `collectionMode` at `public-page` and sets
+  `fixtureOnly`, `allowExternalNetwork`, and `allowMarketplaceAutomation` to
+  deterministic false/true values that prevent live collection.
+- `FixtureProvenance` records synthetic or sanitized fixture origin and hard
+  false flags for secrets and session material.
+
+`SourcingJobCreatedResponse` is returned inside
+`ApiResponseEnvelope<SourcingJobCreatedResponse>` for create routes. It
+contains the `jobId`, `requestId`, `correlationId`, `queued` status, and
+creation timestamp.
+
+`SourcingJobStatusResponse` is returned inside
+`ApiResponseEnvelope<SourcingJobStatusResponse>` for status routes. It contains
+the current `SourcingJobStatus`, typed `SourcingJobProgress`, cancel/retry
+state, optional `SourcingJobResultSummary`, and typed `SourcingJobError[]`.
+
+`SourcingJobError` uses `SourcingJobErrorReason` values for unsupported source,
+missing fixture, validation failure, cancellation, collector failure, pipeline
+failure, and unknown failure cases. These errors are data contracts; they are
+not mock-success fallbacks.
+
+### Fixture Collector References
+
+`FixtureCollectorInput` and `FixtureCollectorResult` define the fixture-only
+collector boundary used by later collector, core, and integration smoke slices.
+They require fixture provenance, request/job correlation, and `sourceType:
+fixture`. They must never carry cookies, tokens, credentials, browser profile
+data, captured session payloads, or live marketplace responses.
+
 ### Normalized Product
 
 `NormalizedProduct` standardizes market product data:
@@ -61,6 +116,10 @@ Korean-facing UI labels.
 
 The DTO intentionally does not contain UI labels. Presentation modules can map
 field names to Korean-facing labels at display time.
+
+`NormalizedMarketItem` is exported as the job-facing alias for
+`NormalizedProduct` so the sourcing job vocabulary can reference normalized
+market items without duplicating or drifting from the canonical product shape.
 
 ### Collector Result And Partial Failure
 

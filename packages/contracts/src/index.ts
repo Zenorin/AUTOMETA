@@ -1,10 +1,11 @@
-export const contractSchemaVersion = "2026-05-06.wbs-04" as const;
+export const contractSchemaVersion = "2026-05-07.wbs-12" as const;
 
 export type ContractSchemaVersion = typeof contractSchemaVersion;
 export type IsoDateTimeString = string;
 export type CorrelationId = string;
 export type RequestId = string;
 export type JobId = string;
+export type SourcingJobId = JobId;
 export type ProductId = string;
 export type UrlString = string;
 export type LocaleCode = string;
@@ -93,6 +94,54 @@ export type SourcingRequest = {
   readonly retry?: RetryState;
 };
 
+export const sourcingJobStatuses = [
+  "queued",
+  "running",
+  "completed",
+  "failed",
+  "cancelled",
+] as const;
+
+export type SourcingJobStatus = (typeof sourcingJobStatuses)[number];
+
+export const sourcingJobSourceTypes = [
+  "fixture",
+  "manual-keyword",
+  "manual-product-url",
+  "manual-market-product-id",
+] as const;
+
+export type SourcingJobSourceType = (typeof sourcingJobSourceTypes)[number];
+
+export type FixtureProvenance = {
+  readonly kind: "fixture-provenance";
+  readonly fixtureId: string;
+  readonly revision: string;
+  readonly source: "synthetic" | "sanitized";
+  readonly containsSecrets: false;
+  readonly containsSessionMaterial: false;
+};
+
+export type FixtureSafeSourcingPolicy = Omit<SourcingPolicy, "collectionMode"> & {
+  readonly collectionMode: "public-page";
+  readonly fixtureOnly: true;
+  readonly allowExternalNetwork: false;
+  readonly allowMarketplaceAutomation: false;
+};
+
+export type SourcingJobRequest = {
+  readonly kind: "sourcing-job-request";
+  readonly schemaVersion: ContractSchemaVersion;
+  readonly requestId: RequestId;
+  readonly correlationId: CorrelationId;
+  readonly requestedAt: IsoDateTimeString;
+  readonly sourceType: SourcingJobSourceType;
+  readonly seed: SourcingSeed;
+  readonly scope: SourcingScope;
+  readonly policy: FixtureSafeSourcingPolicy;
+  readonly fixture?: FixtureProvenance;
+};
+
 export type Money = {
   readonly amountMinor: number;
   readonly currency: CurrencyCode;
@@ -156,6 +205,21 @@ export type NormalizedProduct = {
   readonly offer: ProductOffer;
   readonly images: readonly ProductImage[];
   readonly attributes: readonly ProductAttribute[];
+};
+
+export type NormalizedMarketItem = NormalizedProduct;
+
+export type FixtureCollectorInput = {
+  readonly kind: "fixture-collector-input";
+  readonly schemaVersion: ContractSchemaVersion;
+  readonly jobId: SourcingJobId;
+  readonly requestId: RequestId;
+  readonly correlationId: CorrelationId;
+  readonly sourceType: "fixture";
+  readonly fixture: FixtureProvenance;
+  readonly seed: SourcingSeed;
+  readonly scope: SourcingScope;
+  readonly requestedAt: IsoDateTimeString;
 };
 
 export const collectorFailureReasons = [
@@ -238,6 +302,18 @@ export type MarketCollectorResult =
       readonly stats: CollectorRunStats;
       readonly completedAt: IsoDateTimeString;
     };
+
+export type FixtureCollectorResult = {
+  readonly kind: "fixture-collector-result";
+  readonly schemaVersion: ContractSchemaVersion;
+  readonly jobId: SourcingJobId;
+  readonly requestId: RequestId;
+  readonly correlationId: CorrelationId;
+  readonly sourceType: "fixture";
+  readonly fixture: FixtureProvenance;
+  readonly result: MarketCollectorResult;
+  readonly completedAt: IsoDateTimeString;
+};
 
 export type PipelineStage =
   | "queued"
@@ -349,6 +425,71 @@ export type JobState = {
   readonly updatedAt: IsoDateTimeString;
 };
 
+export type SourcingJobProgress = {
+  readonly kind: "sourcing-job-progress";
+  readonly stage: PipelineStage;
+  readonly completedUnits: number;
+  readonly totalUnits: number;
+  readonly updatedAt: IsoDateTimeString;
+};
+
+export const sourcingJobErrorReasons = [
+  "unsupported-source",
+  "fixture-not-found",
+  "validation-failed",
+  "cancelled",
+  "collector-failed",
+  "pipeline-failed",
+  "unknown",
+] as const;
+
+export type SourcingJobErrorReason = (typeof sourcingJobErrorReasons)[number];
+
+export type SourcingJobError = {
+  readonly kind: "sourcing-job-error";
+  readonly reason: SourcingJobErrorReason;
+  readonly message: string;
+  readonly retryable: boolean;
+  readonly occurredAt: IsoDateTimeString;
+  readonly failure?: PartialFailure;
+};
+
+export type SourcingJobResultSummary = {
+  readonly kind: "sourcing-job-result-summary";
+  readonly jobId: SourcingJobId;
+  readonly status: SourcingJobStatus;
+  readonly markets: readonly MarketId[];
+  readonly itemCount: number;
+  readonly failureCount: number;
+  readonly collectorStatuses: readonly MarketCollectorResult["status"][];
+  readonly completedAt?: IsoDateTimeString;
+};
+
+export type SourcingJobCreatedResponse = {
+  readonly kind: "sourcing-job-created-response";
+  readonly schemaVersion: ContractSchemaVersion;
+  readonly jobId: SourcingJobId;
+  readonly requestId: RequestId;
+  readonly correlationId: CorrelationId;
+  readonly status: "queued";
+  readonly createdAt: IsoDateTimeString;
+};
+
+export type SourcingJobStatusResponse = {
+  readonly kind: "sourcing-job-status-response";
+  readonly schemaVersion: ContractSchemaVersion;
+  readonly jobId: SourcingJobId;
+  readonly requestId: RequestId;
+  readonly correlationId: CorrelationId;
+  readonly status: SourcingJobStatus;
+  readonly progress: SourcingJobProgress;
+  readonly cancel: CancelState;
+  readonly retry: RetryState;
+  readonly resultSummary?: SourcingJobResultSummary;
+  readonly errors: readonly SourcingJobError[];
+  readonly updatedAt: IsoDateTimeString;
+};
+
 export const apiErrorCodes = [
   "bad-request",
   "unauthorized",
@@ -415,6 +556,9 @@ export type ApiResponseEnvelope<TData> =
       readonly error: ErrorEnvelope;
       readonly meta: ApiResponseMeta;
     };
+
+export type SourcingJobCreateApiResponse = ApiResponseEnvelope<SourcingJobCreatedResponse>;
+export type SourcingJobStatusApiResponse = ApiResponseEnvelope<SourcingJobStatusResponse>;
 
 export type ExtensionMessageSource = "web" | "api" | "extension-background" | "extension-content";
 

@@ -152,7 +152,10 @@
       ],
       "validation_commands": [
         "pnpm --filter @project/contracts typecheck",
-        "python -S tools/codex/codex_skillset_generator.py validate-planning --root ."
+        "pnpm --filter @project/contracts test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all"
       ]
     },
     {

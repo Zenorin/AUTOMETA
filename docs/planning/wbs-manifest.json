@@ -427,18 +427,43 @@
       ],
       "target_files": [
         "packages/contracts/src/index.ts",
-        "docs/contracts/api-contracts.md"
+        "docs/contracts/api-contracts.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
         "pnpm --filter @project/contracts typecheck",
-        "python -S tools/codex/codex_skillset_generator.py validate-planning --root ."
+        "pnpm --filter @project/contracts test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all"
       ],
       "depends_on": [
         "WBS-11"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, generated contract summary, blockers, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Expanded shared sourcing job API and contract vocabulary for fixture-backed product foundation.",
+        "validation": "pnpm --filter @project/contracts typecheck PASS; pnpm --filter @project/contracts test PASS; validate-planning PASS; validate-dev-flow PASS; pnpm validate:all PASS",
+        "changed_files": [
+          "packages/contracts/src/index.ts",
+          "docs/contracts/api-contracts.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "risks": [
+          "Runtime sourcing job API implementation remains deferred to later WBS items.",
+          "Fixture data must remain synthetic or sanitized with provenance.",
+          "Crawling, login, session/cookie/token handling, browser automation, and external API calls remain disabled."
+        ],
+        "rollback": "Revert the WBS-12 contract and planning changes to restore the pre-WBS-12 planning state."
+      }
     },
     {
       "id": "WBS-13",
