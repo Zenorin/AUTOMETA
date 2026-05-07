@@ -777,7 +777,7 @@ Expected evidence:
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
 ```
 
-### WBS-19 — Add fixture-only integration smoke evidence across API, web, extension, collectors, and core
+### WBS-19 — Add fixture-only integration smoke evidence across contracts, collectors, core, API, web, extension, and browser-session handoff docs
 
 ```text
 Read AGENTS.md first.
@@ -787,25 +787,43 @@ Target workstream: project-development-bootstrap
 Target module path: .
 
 Target files:
+- `docs/evidence/fixture-integration-smoke.md`
 - `docs/planning/phase-gates.md`
 - `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
 
 Goal:
-Connect WBS-12 through WBS-18 with fixture-only integration smoke evidence and a clean handoff.
+Add fixture-only integration smoke evidence across contracts, collectors, core,
+API, web, extension, and browser-session handoff documentation without adding
+new product runtime behavior.
 
 Required behavior:
-- Run full validation and direct clean-room audit.
-- Classify failures by module and fix only directly related integration blockers.
+- Verify WBS-12 through WBS-18 as one integrated fixture-only product foundation.
+- Document the integration path: shared sourcing job contracts, deterministic
+  collector fixtures, deterministic core pipeline validation, fixture-only
+  sourcing job API, web job creation/status UI states, extension sourcing
+  readiness boundary, and local-only browser session handoff design boundary.
+- Keep evidence fixture-only.
 - Preserve the WBS-05 ASGI/TestClient risk if it still reproduces.
-- Do not add real crawling, login/session/cookie/token/credential handling, browser automation, external API calls, mock-success fallback, or copied reference source/assets.
+- Do not implement runtime behavior or modify product code.
+- Do not add marketplace access, live crawling, browser automation,
+  login/session/cookie/token handling, secrets, or external API calls.
 
 Validation commands:
 - `pnpm validate:all`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/workspace-check.mjs`
 - `node tools/checks/cleanroom-audit.mjs`
+- `git diff --check`
 
 Expected evidence:
 - Changed files
 - Fixture-only integration summary
+- Covered modules and smoke path
+- Clean-room boundary assertions
+- Fixture provenance
 - Commands run and PASS/FAIL results
 - Remaining risks or blockers
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.

@@ -852,7 +852,7 @@
       "id": "WBS-19",
       "order": 19,
       "phase": "fixture-integration",
-      "title": "Add fixture-only integration smoke evidence across API, web, extension, collectors, and core",
+      "title": "Add fixture-only integration smoke evidence across contracts, collectors, core, API, web, extension, and browser-session handoff docs",
       "workstream": "project-development-bootstrap",
       "module_path": ".",
       "suggested_skills": [
@@ -861,19 +861,55 @@
         "consistency-guard"
       ],
       "target_files": [
+        "docs/evidence/fixture-integration-smoke.md",
         "docs/planning/phase-gates.md",
-        "docs/planning/codex-command-queue.md"
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
         "pnpm validate:all",
-        "node tools/checks/cleanroom-audit.mjs"
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/workspace-check.mjs",
+        "node tools/checks/cleanroom-audit.mjs",
+        "git diff --check"
       ],
       "depends_on": [
         "WBS-18"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
-      "evidence": "Record changed files, commands, PASS/FAIL output, fixture-only integration evidence, unresolved risks, and rollback note.",
-      "status": "todo"
+      "evidence": "Record changed files, commands, PASS/FAIL output, fixture-only integration smoke summary, covered modules, clean-room assertions, fixture provenance, unresolved risks, next rollout decision, and rollback note.",
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Added fixture-only integration smoke evidence across WBS-12 through WBS-18 without changing product runtime behavior.",
+        "validation": "pnpm validate:all PASS; validate-planning PASS; validate-dev-flow PASS; workspace-check PASS; cleanroom-audit PASS; git diff --check PASS",
+        "changed_files": [
+          "docs/evidence/fixture-integration-smoke.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "fixture_only_integration_smoke_summary": [
+          "WBS-12 shared sourcing job contracts provide fixture-safe request, status, result, error, progress, and envelope vocabulary.",
+          "WBS-13 deterministic collector fixtures and WBS-14 core validation preserve synthetic fixture provenance, raw/normalized separation, deterministic output, and partial failures.",
+          "WBS-15 API, WBS-16 web UI, and WBS-17 extension readiness consume the same fixture-only vocabulary while rejecting unsupported live/manual sources.",
+          "WBS-18 browser/session handoff remains local-only design documentation with no implementation."
+        ],
+        "clean_room_boundary_assertions": [
+          "WBS-19 changed planning/evidence docs only and did not modify product runtime code.",
+          "No marketplace access, live crawling, browser automation, login/session/cookie/token handling, credential handling, secrets, or external API calls were added.",
+          "Clean-room audit and validators remain enabled and passing."
+        ],
+        "fixture_provenance": "The integrated smoke path uses WBS-13 synthetic clean-room fixtures with reserved fixture.invalid URLs and WBS-14 through WBS-17 deterministic fixture vocabulary; WBS-19 adds no new fixture data or live marketplace responses.",
+        "risks": [
+          "The WBS-05 full ASGI/TestClient smoke risk remains documented because TestClient hung in the earlier local environment.",
+          "Future live marketplace, browser/session, automation, or external network behavior remains unapproved and requires a later WBS with security, privacy, anti-bot, contract, test, clean-room, secret-scanning, dependency/permission, and rollback evidence."
+        ],
+        "next_rollout_decision": "Proceed only to a separately approved product slice; WBS-19 does not approve live marketplace, browser/session, automation, or external network behavior.",
+        "rollback": "Revert the WBS-19 evidence document, phase gate, command queue, compact command queue JSON, and manifest changes to restore the pre-WBS-19 planning state."
+      }
     }
   ]
 }

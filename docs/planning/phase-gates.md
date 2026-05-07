@@ -21,7 +21,7 @@
 | web-jobs | `pnpm --filter @project/web typecheck` and `pnpm --filter @project/web test` pass for sourcing job creation/status UI states | Missing loading/empty/error/partial/cancel states, API envelope mismatch, product copy that implies live crawling, or broken responsive layout |
 | extension-job-bridge | `pnpm --filter extension build` passes and extension messages remain explicitly allowed, request-correlated, and unsupported-message typed | Wildcard external trust, login/session/cookie/credential extraction, live crawling, or mock success for unsupported messages |
 | session-handoff-design | Planning/dev-flow validation, clean-room audit, `pnpm validate:all`, and `git diff --check` pass; `docs/architecture/browser-session-handoff.md` documents a design-only, local-only browser/session handoff boundary with approval gates and no runtime code | Any implementation of browser automation, cookie/session/token capture, credential storage, browser profile/account data handling, marketplace access, live crawling, external API calls, or weakened clean-room validation before approval |
-| fixture-integration | `pnpm validate:all` and `node tools/checks/cleanroom-audit.mjs` pass with fixture-only end-to-end smoke evidence | Any failing module check, hidden external IO, copied source/assets, real secrets, or unclassified ASGI/TestClient integration blocker |
+| fixture-integration | `pnpm validate:all`, planning/dev-flow validation, workspace check, clean-room audit, and `git diff --check` pass with fixture-only end-to-end smoke evidence in `docs/evidence/fixture-integration-smoke.md` | Any failing module check, hidden external IO, copied source/assets, real secrets, product runtime code change, or unclassified ASGI/TestClient integration blocker |
 
 ## WBS-10 Integration Evidence
 
@@ -211,3 +211,23 @@ configuration. Secrets, credentials, cookies, tokens, sessions, browser
 profiles, account data, service-account files, API keys, passwords, and private
 keys must never be committed, logged, serialized, stored in fixtures, or copied
 into docs as real values.
+
+## WBS-19 Fixture Integration Smoke Evidence
+
+WBS-19 is complete when `docs/evidence/fixture-integration-smoke.md` records
+fixture-only integration evidence across WBS-12 through WBS-18 and all WBS-19
+validation commands pass. The completed fixture-integration slice verifies:
+
+- Shared sourcing job contracts from WBS-12.
+- Deterministic collector fixtures from WBS-13.
+- Deterministic core pipeline validation from WBS-14.
+- Fixture-only sourcing job API boundaries from WBS-15.
+- Web job creation/status UI states from WBS-16.
+- Extension sourcing readiness messages from WBS-17.
+- Local-only browser session handoff design boundaries from WBS-18.
+
+This slice is evidence-only and does not modify product runtime code. It keeps
+live marketplace access, live crawling, browser automation, login/session
+cookie/token handling, credential handling, secrets, and external API calls
+disabled. The WBS-05 ASGI/TestClient deferred-smoke risk remains documented
+instead of being hidden by WBS-19.

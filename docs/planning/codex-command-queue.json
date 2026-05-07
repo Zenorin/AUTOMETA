@@ -284,7 +284,11 @@
       ],
       "validation_commands": [
         "pnpm validate:all",
-        "node tools/checks/cleanroom-audit.mjs"
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/workspace-check.mjs",
+        "node tools/checks/cleanroom-audit.mjs",
+        "git diff --check"
       ]
     }
   ]
