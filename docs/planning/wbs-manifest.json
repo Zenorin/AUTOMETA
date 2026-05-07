@@ -326,7 +326,15 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, blockers, and remaining risks.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Core sourcing pipeline scaffold implemented and validated with typed stages, progress/log events, cancellation readiness, and partial-failure preservation.",
+        "validation": "pnpm --filter @project/core typecheck PASS; validate_scaffold PASS; validate_planning PASS; validate_dev_flow PASS; workspace-check PASS; cleanroom-audit PASS",
+        "changed_files": [
+          "packages/core/src/index.ts"
+        ],
+        "rollback": "Revert packages/core/src/index.ts and docs/planning/wbs-manifest.json to restore the prior core pipeline scaffold state."
+      }
     },
     {
       "id": "WBS-10",
