@@ -149,3 +149,23 @@ live marketplace crawling, browser automation, login/session/cookie/token
 handling, credential handling, external API calls, secrets, or copied reference
 source/assets. ASGI/TestClient smoke remains a carried risk; this slice keeps
 coverage at direct handler level so hangs are not hidden.
+
+## WBS-16 Fixture Web UI Evidence
+
+WBS-16 is complete when the web shell renders fixture-only sourcing job
+creation/status/result states using the WBS-15 API envelope vocabulary. The
+completed web-jobs slice adds:
+
+- A fixture job console with ready, creating, queued, completed, failed, and
+  invalid-source rejected states.
+- Job status, progress, result summary counts, collector statuses, and an
+  unsupported source guard.
+- A clean-room boundary notice that keeps live marketplace access visibly
+  blocked.
+- Server-rendered tests for shell continuity, fixture job labels, unsupported
+  source rejection, sensitive field-name exclusion, and result summary/status
+  copy.
+
+The UI uses deterministic static envelope examples and does not call live
+marketplaces, automate browsers, require login, handle session/cookie/token
+material, expose credentials, add secrets, or copy reference source/assets.

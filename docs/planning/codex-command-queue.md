@@ -629,30 +629,46 @@ Expected evidence:
 
 ```text
 Read AGENTS.md first.
-Use $project-frontend-design $frontend-product-ui $consistency-guard.
+Use $planning-and-task-breakdown $consistency-guard $project-frontend-design $frontend-product-ui.
 
 Target workstream: project-frontend-design
 Target module path: apps/web
 
 Target files:
 - `apps/web/src/App.tsx`
+- `apps/web/src/styles.css`
 - `apps/web/test/app-shell.test.mjs`
+- `docs/contracts/api-contracts.md`
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
 
 Goal:
 Add job creation/status UI states backed by shared API envelope vocabulary and fixture-only behavior.
 
 Required behavior:
-- Cover ready, creating, running, progress, partial_failure, failed, cancelled, and unsupported states.
-- Keep copy clear that live crawling/session handoff is not enabled.
-- Do not add real marketplace requests, hidden credentials, tokens, cookies, browser automation, or copied reference UI/assets.
+- Add UI states for fixture-only sourcing job creation.
+- Add job status/result display states.
+- Show clean-room and fixture-only boundary clearly.
+- Use the WBS-15 API envelope/status vocabulary already documented.
+- Cover idle/ready, creating, queued, completed, failed, invalid-source rejected, fixture result summary, and clean-room boundary notice.
+- Keep unsupported live/external source behavior visibly blocked.
+- Do not add real marketplace requests, live crawling, hidden credentials, session/cookie/token handling, browser automation, or copied reference UI/assets.
 
 Validation commands:
 - `pnpm --filter @project/web typecheck`
 - `pnpm --filter @project/web test`
+- `cd apps/api && pytest`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
 
 Expected evidence:
 - Changed files
 - UI state summary
+- Fixture-only API boundary summary
 - Commands run and PASS/FAIL results
 - Remaining risks or blockers
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.

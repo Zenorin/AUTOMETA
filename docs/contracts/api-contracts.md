@@ -118,6 +118,19 @@ types with typed `validation-failed` envelopes. It does not perform live
 marketplace crawling, browser automation, login/session/cookie/token handling,
 credential handling, external API calls, or secret storage.
 
+### Fixture-Only Web Job UI
+
+WBS-16 consumes the WBS-15 API envelope vocabulary in the web shell without
+adding network calls. The UI renders deterministic fixture job states for
+ready, creating, queued, completed, failed, and invalid-source rejected paths;
+it also shows status/progress, result summary counts, collector statuses, and a
+clean-room boundary notice.
+
+The web UI keeps unsupported live/external source behavior disabled and visibly
+rejected. It must not render secret/session/cookie/token field names, expose
+credential values, call marketplace pages, automate browsers, or imply that
+real collection is enabled.
+
 ### Fixture Collector References
 
 `FixtureCollectorInput` and `FixtureCollectorResult` define the fixture-only

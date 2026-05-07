@@ -34,6 +34,7 @@ a {
 }
 
 .topbar,
+.job-console,
 .stage-band,
 .state-table {
   border: 1px solid #ccd7d1;
@@ -171,9 +172,145 @@ h2 {
 
 .summary-panel p,
 .section-card p,
+.job-console p,
 .state-row span {
   margin-bottom: 0;
   color: #4b5954;
+}
+
+.job-console {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.job-console__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.job-actions button {
+  min-height: 42px;
+  border: 1px solid #19745d;
+  border-radius: 8px;
+  background: #19745d;
+  color: #ffffff;
+  padding: 9px 13px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.job-actions button:disabled {
+  border-color: #c9d5d0;
+  background: #eef3f0;
+  color: #62706a;
+  cursor: not-allowed;
+}
+
+.job-state-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.job-state,
+.job-detail-panel {
+  border: 1px solid #cbd7d1;
+  border-radius: 8px;
+  background: #f8faf9;
+}
+
+.job-state {
+  display: grid;
+  gap: 8px;
+  min-height: 116px;
+  align-content: start;
+  padding: 12px;
+  border-top-width: 4px;
+}
+
+.job-state span,
+.job-detail-panel strong {
+  color: #18251f;
+  font-weight: 800;
+}
+
+.job-state p {
+  font-size: 0.84rem;
+}
+
+.job-state--completed,
+.job-state--queued {
+  border-top-color: #19745d;
+}
+
+.job-state--creating {
+  border-top-color: #5f6db7;
+}
+
+.job-state--failed,
+.job-state--invalid-source-rejected {
+  border-top-color: #b4563e;
+}
+
+.job-state--idle {
+  border-top-color: #9b6b15;
+}
+
+.job-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.job-detail-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.job-detail-panel dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.job-detail-panel dl div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.job-detail-panel dt {
+  color: #52605b;
+  font-weight: 800;
+}
+
+.job-detail-panel dd {
+  margin: 0;
+  color: #203029;
+}
+
+.blocked-source {
+  border-color: #d3b8ae;
+  background: #fff9f7;
+}
+
+.boundary-notice {
+  border: 1px solid #d4ded9;
+  border-radius: 8px;
+  background: #f9fbfa;
+  padding: 12px 14px;
 }
 
 .stage-band,
@@ -284,6 +421,9 @@ h2 {
   .topbar,
   .summary-grid,
   .section-grid,
+  .job-console__header,
+  .job-state-grid,
+  .job-detail-grid,
   .stage-list {
     grid-template-columns: 1fr;
   }
@@ -300,6 +440,7 @@ h2 {
   }
 
   .topbar,
+  .job-console,
   .stage-band,
   .state-table {
     padding: 18px;
@@ -316,5 +457,13 @@ h2 {
 
   .status-chip {
     width: fit-content;
+  }
+
+  .job-actions {
+    justify-content: flex-start;
+  }
+
+  .job-detail-panel dl div {
+    grid-template-columns: 1fr;
   }
 }

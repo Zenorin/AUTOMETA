@@ -667,18 +667,54 @@
       ],
       "target_files": [
         "apps/web/src/App.tsx",
-        "apps/web/test/app-shell.test.mjs"
+        "apps/web/src/styles.css",
+        "apps/web/test/app-shell.test.mjs",
+        "docs/contracts/api-contracts.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
         "pnpm --filter @project/web typecheck",
-        "pnpm --filter @project/web test"
+        "pnpm --filter @project/web test",
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
       ],
       "depends_on": [
         "WBS-15"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, UI state summary, blockers, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Added fixture-only sourcing job creation/status/result UI states using WBS-15 API envelope vocabulary while preserving the existing clean-room shell states.",
+        "validation": "pnpm --filter @project/web typecheck PASS; pnpm --filter @project/web test PASS; cd apps/api && pytest PASS; validate-planning PASS; validate-dev-flow PASS; pnpm validate:all PASS; git diff --check PASS",
+        "changed_files": [
+          "apps/web/src/App.tsx",
+          "apps/web/src/styles.css",
+          "apps/web/test/app-shell.test.mjs",
+          "docs/contracts/api-contracts.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "ui_state_summary": [
+          "The shell now renders fixture job ready, creating, queued, completed, failed, and invalid-source rejected states.",
+          "The job console displays WBS-15-style create/status envelopes, progress, result summary counts, collector statuses, and a clean-room boundary notice.",
+          "Unsupported live source behavior is disabled and visibly rejected without implying real marketplace access."
+        ],
+        "fixture_api_boundary": "The web UI uses static WBS-15 API envelope/status vocabulary and synthetic fixture result summary data only; it does not call live marketplaces, automate browsers, handle login/session/cookie/token data, or expose credential fields.",
+        "risks": [
+          "This slice is a deterministic UI preview; live API polling and browser smoke remain deferred.",
+          "Visible sensitive field names were removed from rendered UI copy while preserving local-only boundary semantics."
+        ],
+        "rollback": "Revert the WBS-16 web UI, web test, contract docs, and planning evidence changes to restore the pre-WBS-16 state."
+      }
     },
     {
       "id": "WBS-17",

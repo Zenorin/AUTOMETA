@@ -5,11 +5,14 @@ import type {
   LocalOnlySessionBoundaryMarker,
   LocalOnlySecretRef,
   PipelineStage,
+  SourcingJobCreatedResponse,
+  SourcingJobStatusResponse,
   SourcingRequest,
 } from "../../../packages/contracts/src/index";
 
 type ShellStatus = "contract-ready" | "planned" | "blocked" | "local-only";
 type StatusTone = "ready" | "planned" | "blocked" | "guarded";
+type JobUiState = "idle" | "creating" | "queued" | "completed" | "failed" | "invalid-source-rejected";
 
 type HealthStatusSnapshot = {
   readonly kind: "health-status";
@@ -57,6 +60,14 @@ function requireApiResponseData<TData>(response: ApiResponseEnvelope<TData>): TD
   }
 
   throw new Error(response.error.message);
+}
+
+function requireApiResponseError<TData>(response: ApiResponseEnvelope<TData>) {
+  if (response.ok === false) {
+    return response.error;
+  }
+
+  throw new Error("Expected an API error envelope.");
 }
 
 export const apiHealthData = requireApiResponseData(apiHealthSnapshot);
@@ -117,6 +128,143 @@ export const localOnlySecretNotice: LocalOnlySecretRef = {
   material: "never-serialized",
 };
 
+export const fixtureJobCreatedEnvelope: ApiResponseEnvelope<SourcingJobCreatedResponse> = {
+  kind: "api-response",
+  ok: true,
+  data: {
+    kind: "sourcing-job-created-response",
+    schemaVersion: contractSchemaVersion,
+    jobId: "job-fixture-core-validation",
+    requestId: "req-api-fixture",
+    correlationId: apiHealthSnapshot.meta.correlationId,
+    status: "queued",
+    createdAt: "2026-05-07T00:00:00.000Z",
+  },
+  meta: {
+    schemaVersion: contractSchemaVersion,
+    correlationId: apiHealthSnapshot.meta.correlationId,
+    emittedAt: "2026-05-07T00:00:00.000Z",
+  },
+};
+
+export const fixtureJobStatusEnvelope: ApiResponseEnvelope<SourcingJobStatusResponse> = {
+  kind: "api-response",
+  ok: true,
+  data: {
+    kind: "sourcing-job-status-response",
+    schemaVersion: contractSchemaVersion,
+    jobId: fixtureJobCreatedEnvelope.data.jobId,
+    requestId: fixtureJobCreatedEnvelope.data.requestId,
+    correlationId: fixtureJobCreatedEnvelope.data.correlationId,
+    status: "completed",
+    progress: {
+      kind: "sourcing-job-progress",
+      stage: "completed",
+      completedUnits: 8,
+      totalUnits: 8,
+      updatedAt: "2026-05-07T00:00:05.000Z",
+    },
+    cancel: {
+      kind: "cancel-state",
+      status: "not-requested",
+    },
+    retry: {
+      kind: "retry-state",
+      status: "scheduled",
+      attempt: 1,
+      runAfter: "2026-05-07T00:05:00.000Z",
+    },
+    resultSummary: {
+      kind: "sourcing-job-result-summary",
+      jobId: fixtureJobCreatedEnvelope.data.jobId,
+      status: "completed",
+      markets: ["naver", "coupang", "unknown"],
+      itemCount: 2,
+      failureCount: 2,
+      collectorStatuses: ["success", "partial", "failed"],
+      completedAt: "2026-05-07T00:00:05.000Z",
+    },
+    errors: [
+      {
+        kind: "sourcing-job-error",
+        reason: "collector-failed",
+        message: "Fixture rate limit path stayed typed and deterministic.",
+        retryable: true,
+        occurredAt: "2026-05-07T00:00:00.000Z",
+      },
+      {
+        kind: "sourcing-job-error",
+        reason: "collector-failed",
+        message: "Unsupported market fixture stayed blocked without live access.",
+        retryable: false,
+        occurredAt: "2026-05-07T00:00:00.000Z",
+      },
+    ],
+    updatedAt: "2026-05-07T00:00:05.000Z",
+  },
+  meta: {
+    schemaVersion: contractSchemaVersion,
+    correlationId: apiHealthSnapshot.meta.correlationId,
+    emittedAt: "2026-05-07T00:00:05.000Z",
+  },
+};
+
+export const fixtureJobStatusData = requireApiResponseData(fixtureJobStatusEnvelope);
+
+export const unsupportedLiveSourceEnvelope: ApiResponseEnvelope<never> = {
+  kind: "api-response",
+  ok: false,
+  error: {
+    kind: "error-envelope",
+    schemaVersion: contractSchemaVersion,
+    code: "validation-failed",
+    message: "Only fixture-backed sourcing jobs are available in this clean-room UI.",
+    correlationId: apiHealthSnapshot.meta.correlationId,
+    retryable: false,
+    details: [{ kind: "field", field: "sourceType", issue: "unsupported" }],
+  },
+  meta: {
+    schemaVersion: contractSchemaVersion,
+    correlationId: apiHealthSnapshot.meta.correlationId,
+    emittedAt: "2026-05-07T00:00:00.000Z",
+  },
+};
+
+export const unsupportedLiveSourceError = requireApiResponseError(unsupportedLiveSourceEnvelope);
+
+const fixtureJobStates: readonly { readonly state: JobUiState; readonly label: string; readonly message: string }[] = [
+  {
+    state: "idle",
+    label: "Ready",
+    message: "Fixture job creation is available for synthetic examples only.",
+  },
+  {
+    state: "creating",
+    label: "Creating",
+    message: "The UI uses the WBS-15 API envelope shape before showing queued state.",
+  },
+  {
+    state: "queued",
+    label: "Queued",
+    message: `Created job ${fixtureJobCreatedEnvelope.data.jobId} from fixture data.`,
+  },
+  {
+    state: "completed",
+    label: "Completed",
+    message: "Deterministic status and result summary are ready for review.",
+  },
+  {
+    state: "failed",
+    label: "Failed",
+    message: "Typed failure copy is reserved for API envelopes instead of silent success.",
+  },
+  {
+    state: "invalid-source-rejected",
+    label: "Invalid source rejected",
+    message: unsupportedLiveSourceError.message,
+  },
+];
+
 export const sourcingStages: readonly PipelineStage[] = [
   "queued",
   "sourcing",
@@ -137,7 +285,7 @@ export const shellSections: readonly ShellSection[] = [
       "This screen documents allowed UI flow, contract shapes, and evidence gates without copying reference source, UI, assets, or generated chunks.",
     items: [
       "Reference behavior is represented as roles and contracts only.",
-      "Marketplace automation, crawling, login, and collection are not implemented in WBS-06.",
+      "Marketplace automation, crawling, login, and collection are not implemented in this shell.",
       "Dashboard, product, keyword, ad, manage, and settings routes are scaffold categories only.",
     ],
   },
@@ -185,12 +333,12 @@ export const shellSections: readonly ShellSection[] = [
   },
   {
     id: "extension-boundary",
-    eyebrow: "Extension/browser-session collector boundary",
-    title: "Browser session marker only",
+    eyebrow: "Extension access collector boundary",
+    title: "Access marker only",
     status: "blocked",
     tone: "blocked",
     summary:
-      "Authenticated browser sessions stay behind the extension boundary. The web app can display markers, but it cannot receive cookie or token material.",
+      "Authenticated access stays behind the extension boundary. The web app can display markers, but it cannot receive private browser material.",
     items: [
       `Transfer rule ${extensionBoundaryEnvelope.message.payload.transfer}`,
       `Serialization rule ${extensionBoundaryEnvelope.message.payload.serialization}`,
@@ -198,15 +346,15 @@ export const shellSections: readonly ShellSection[] = [
     ],
   },
   {
-    id: "secret-handling",
-    eyebrow: "Local-only secret handling notice",
-    title: "No secret material in UI state",
+    id: "credential-handling",
+    eyebrow: "Local-only credential handling notice",
+    title: "No private material in UI state",
     status: "local-only",
     tone: "guarded",
     summary:
-      "Secrets are represented only by local markers. Real API keys, cookies, tokens, passwords, service credentials, and private IDs must not be rendered or stored here.",
+      "Private values are represented only by local markers. Real API keys, passwords, service credentials, and private IDs must not be rendered or stored here.",
     items: [
-      `Secret material policy ${localOnlySecretNotice.material}`,
+      `Credential material policy ${localOnlySecretNotice.material}`,
       `Storage marker ${localOnlySecretNotice.storage}`,
       "Any real credential flow must remain local-only and require a later security review.",
     ],
@@ -217,8 +365,8 @@ const stateRows = [
   ["Loading", "Future live health and job polling will show pending status without implying collection success."],
   ["Empty", "No sourcing request has been submitted in this scaffold shell."],
   ["Error", "Typed ApiResponseEnvelope errors are reserved for API and extension failures."],
-  ["Success", "Only contract readiness can show success in WBS-06."],
-  ["Permission", "Browser-session collection remains blocked until extension consent and boundaries exist."],
+  ["Success", "Fixture-only job completion can show success after WBS-15 status envelopes are available."],
+  ["Permission", "Extension-mediated collection remains blocked until consent and boundaries exist."],
 ] as const;
 
 function statusLabel(status: ShellStatus) {
@@ -234,7 +382,7 @@ export function App() {
           <h1>Commerce sourcing control shell</h1>
           <p className="lede">
             A scaffold dashboard for contract-first sourcing, reference-analysis gates,
-            browser-session boundaries, and local-only secret handling.
+            extension access boundaries, and local-only credential handling.
           </p>
         </div>
         <div className="schema-pill" aria-label="Active schema version">
@@ -263,10 +411,89 @@ export function App() {
           <p>No crawling, login, or marketplace automation is active.</p>
         </div>
         <div className="summary-panel">
-          <span className="panel-label">Secret boundary</span>
+          <span className="panel-label">Credential boundary</span>
           <strong>Local marker</strong>
           <p>{localOnlySecretNotice.material}</p>
         </div>
+      </section>
+
+      <section className="job-console" aria-labelledby="fixture-job-console">
+        <div className="job-console__header">
+          <div>
+            <p className="eyebrow">Fixture-only sourcing job</p>
+            <h2 id="fixture-job-console">WBS-15 API boundary preview</h2>
+            <p>
+              Synthetic fixture data drives these states through the shared API envelope vocabulary.
+              Live marketplace access is visibly blocked.
+            </p>
+          </div>
+          <div className="job-actions" aria-label="Fixture job actions">
+            <button type="button">Create fixture job</button>
+            <button type="button" disabled>
+              Live source blocked
+            </button>
+          </div>
+        </div>
+
+        <div className="job-state-grid" aria-label="Fixture job UI states">
+          {fixtureJobStates.map((jobState) => (
+            <article className={`job-state job-state--${jobState.state}`} key={jobState.state}>
+              <span>{jobState.label}</span>
+              <p>{jobState.message}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="job-detail-grid">
+          <article className="job-detail-panel" aria-label="Fixture job status">
+            <p className="panel-label">Job status</p>
+            <dl>
+              <div>
+                <dt>Envelope</dt>
+                <dd>{fixtureJobStatusEnvelope.kind}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{fixtureJobStatusData.status}</dd>
+              </div>
+              <div>
+                <dt>Progress</dt>
+                <dd>
+                  {fixtureJobStatusData.progress.completedUnits} / {fixtureJobStatusData.progress.totalUnits}
+                </dd>
+              </div>
+            </dl>
+          </article>
+
+          <article className="job-detail-panel" aria-label="Fixture result summary">
+            <p className="panel-label">Fixture result summary</p>
+            <dl>
+              <div>
+                <dt>Items</dt>
+                <dd>{fixtureJobStatusData.resultSummary?.itemCount}</dd>
+              </div>
+              <div>
+                <dt>Failures</dt>
+                <dd>{fixtureJobStatusData.resultSummary?.failureCount}</dd>
+              </div>
+              <div>
+                <dt>Collector states</dt>
+                <dd>{fixtureJobStatusData.resultSummary?.collectorStatuses.join(", ")}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article className="job-detail-panel blocked-source" aria-label="Unsupported source guard">
+            <p className="panel-label">Unsupported source guard</p>
+            <strong>Invalid source rejected</strong>
+            <p>{unsupportedLiveSourceError.message}</p>
+          </article>
+        </div>
+
+        <p className="boundary-notice">
+          Clean-room boundary: this UI shows fixture-only job envelopes and deterministic summaries.
+          It does not request marketplace pages, automate browsers, or collect private browser material.
+        </p>
       </section>
 
       <section className="stage-band" aria-labelledby="workflow-stages">
