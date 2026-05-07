@@ -423,36 +423,282 @@ Expected evidence:
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
 ```
 
-### Next safe development slice — API ASGI integration smoke
+### WBS-12 — Expand sourcing job API and shared contract vocabulary
 
 ```text
 Read AGENTS.md first.
-Use $project-backend-api $backend-test-matrix $api-error-handling-review.
+Use $project-contracts $api-contract-change $consistency-guard.
+
+Target workstream: project-contracts
+Target module path: packages/contracts
+
+Target files:
+- `packages/contracts/src/index.ts`
+- `docs/contracts/api-contracts.md`
+
+Goal:
+Expand shared contracts for fixture-only sourcing jobs before API, web, extension, collector, or core behavior is added.
+
+Required behavior:
+- Define shared sourcing job request/status/progress/cancel DTOs.
+- Preserve requestId/correlationId and typed error envelope vocabulary.
+- Keep unsupported states as typed failures, not mock success.
+- Keep all live crawling, browser automation, login, marketplace automation, session extraction, cookie handling, credential handling, and external API calls out of scope.
+
+Allowed changes:
+- Implement only this slice and directly required contract docs/tests if configured.
+- Use existing shared contract patterns without weakening types.
+
+Forbidden changes:
+- Do not commit secrets or real credentials.
+- Do not copy restricted reference source text/assets verbatim.
+- Do not implement product code outside shared contracts.
+- Do not add real marketplace crawling, login/session/cookie/token/credential handling, browser automation, or external API calls.
+- Do not create fake passing tests or mock-success fallback.
+
+Validation commands:
+- `pnpm --filter @project/contracts typecheck`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+
+Expected evidence:
+- Changed files
+- Sourcing job contract summary
+- Commands run and PASS/FAIL results
+- Remaining risks or blockers
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### WBS-13 — Add deterministic collector fixtures and fixture result contract checks
+
+```text
+Read AGENTS.md first.
+Use $project-market-collectors $crawler-contract-review $privacy-boundary-review.
+
+Target workstream: project-market-collectors
+Target module path: packages/collectors
+
+Target files:
+- `packages/collectors/src/index.ts`
+- `packages/collectors/fixtures/deterministic-results.json`
+- `packages/collectors/test/fixture-contract.test.mjs`
+
+Goal:
+Add deterministic collector fixture data and contract checks that exercise collector result shapes without live crawling.
+
+Required behavior:
+- Use synthetic or sanitized fixture data only.
+- Keep raw capture metadata separate from normalized collector results.
+- Represent blocked-session/rate-limit/unsupported outcomes as typed fixture failures.
+- Do not add marketplace selectors, real crawling, browser automation, login, session extraction, cookies, tokens, credentials, or external API calls.
+
+Validation commands:
+- `pnpm --filter @project/collectors typecheck`
+
+Expected evidence:
+- Changed files
+- Fixture provenance and contract summary
+- Commands run and PASS/FAIL results
+- Remaining risks or blockers
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### WBS-14 — Validate core pipeline inputs and outputs against fixture collector results
+
+```text
+Read AGENTS.md first.
+Use $project-core-pipeline $consistency-guard.
+
+Target workstream: project-core-pipeline
+Target module path: packages/core
+
+Target files:
+- `packages/core/src/index.ts`
+- `packages/core/test/pipeline-fixture.test.mjs`
+
+Goal:
+Validate the core pipeline scaffold against deterministic collector fixture results.
+
+Required behavior:
+- Validate input/output envelopes for collect, normalize, filter, dedupe, enrich, image_search_ready, save_ready, and summarize.
+- Preserve partial failures and typed progress/log events.
+- Keep cancel/retry readiness markers explicit.
+- Do not add external IO, browser automation, marketplace scraping, login/session/cookie/token/credential handling, or mock-success fallback.
+
+Validation commands:
+- `pnpm --filter @project/core typecheck`
+
+Expected evidence:
+- Changed files
+- Core validation summary
+- Commands run and PASS/FAIL results
+- Remaining risks or blockers
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### WBS-15 — Implement fixture-only sourcing job API boundary
+
+```text
+Read AGENTS.md first.
+Use $project-backend-api $api-contract-change $api-error-handling-review $backend-test-matrix.
 
 Target workstream: project-backend-api
 Target module path: apps/api
 
+Target files:
+- `apps/api/app/main.py`
+- `apps/api/tests/test_sourcing_jobs.py`
+
 Goal:
-Add bounded FastAPI ASGI/client smoke coverage for health and error envelope behavior that closes the WBS-05 deferred TestClient risk if the environment supports it.
+Expose fixture-only sourcing job create/status/progress/cancel readiness through the API shell using shared contracts and typed errors.
 
-Allowed changes:
-- Add or adjust API tests and directly required API test support only.
-- Preserve existing handler-level health/error tests.
-- Keep the test bounded so hangs fail visibly instead of being hidden.
-
-Forbidden changes:
-- Do not weaken or skip existing API tests.
-- Do not hide ASGI/TestClient failures.
-- Do not add product features, real credentials, sessions, cookies, tokens, marketplace crawling, or external API calls.
-- Do not change web, extension, collectors, core, or shared contracts unless a directly required type/export issue blocks the API smoke.
+Required behavior:
+- Use shared sourcing job DTOs and existing API/error envelope semantics.
+- Keep bounded tests for success, unsupported, validation error, and cancellation readiness paths.
+- Keep ASGI/TestClient hangs visible if they still reproduce; do not hide or skip them.
+- Do not call live marketplaces, automate browsers, log in, read sessions/cookies/tokens/credentials, or call external APIs.
 
 Validation commands:
 - `cd apps/api && pytest`
-- `pnpm validate:all`
 
 Expected evidence:
 - Changed files
-- ASGI/client smoke PASS/FAIL with failure source classified
+- API boundary summary
+- Commands run and PASS/FAIL results
+- Remaining risks or blockers, including ASGI/TestClient status
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### WBS-16 — Add web sourcing job creation and status UI states
+
+```text
+Read AGENTS.md first.
+Use $project-frontend-design $frontend-product-ui $consistency-guard.
+
+Target workstream: project-frontend-design
+Target module path: apps/web
+
+Target files:
+- `apps/web/src/App.tsx`
+- `apps/web/test/app-shell.test.mjs`
+
+Goal:
+Add job creation/status UI states backed by shared API envelope vocabulary and fixture-only behavior.
+
+Required behavior:
+- Cover ready, creating, running, progress, partial_failure, failed, cancelled, and unsupported states.
+- Keep copy clear that live crawling/session handoff is not enabled.
+- Do not add real marketplace requests, hidden credentials, tokens, cookies, browser automation, or copied reference UI/assets.
+
+Validation commands:
+- `pnpm --filter @project/web typecheck`
+- `pnpm --filter @project/web test`
+
+Expected evidence:
+- Changed files
+- UI state summary
+- Commands run and PASS/FAIL results
 - Remaining risks or blockers
-- Rollback note: Revert the API test/support changes if validation fails.
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### WBS-17 — Connect extension request messages to sourcing job readiness boundary
+
+```text
+Read AGENTS.md first.
+Use $project-extension-bridge $content-script-boundary $privacy-boundary-review $consistency-guard.
+
+Target workstream: project-extension-bridge
+Target module path: apps/extension
+
+Target files:
+- `apps/extension/src/background.ts`
+- `packages/contracts/src/index.ts`
+
+Goal:
+Align extension messages with sourcing job readiness contracts without opening external trust or session handling.
+
+Required behavior:
+- Support only explicitly allowed fixture/job readiness messages with requestId correlation.
+- Return typed errors for unsupported messages.
+- Do not use wildcard trust for external messages.
+- Do not implement live crawling, login, marketplace automation, session extraction, cookie handling, credential handling, or external API calls.
+
+Validation commands:
+- `pnpm --filter extension build`
+- `pnpm --filter @project/contracts typecheck`
+
+Expected evidence:
+- Changed files
+- Message boundary summary
+- Commands run and PASS/FAIL results
+- Remaining risks or blockers
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### WBS-18 — Document local-only browser session handoff boundaries
+
+```text
+Read AGENTS.md first.
+Use $planning-and-task-breakdown $privacy-boundary-review $session-boundary-security $anti-bot-compliance-check.
+
+Target workstream: project-development-bootstrap
+Target module path: .
+
+Target files:
+- `docs/architecture/local-session-handoff.md`
+- `docs/planning/phase-gates.md`
+
+Goal:
+Write a design-only local session handoff boundary document before any session-related implementation is considered.
+
+Required behavior:
+- Document allowed, forbidden, and approval-required boundaries.
+- Keep handoff local-only and user-controlled at the design level.
+- Explicitly keep cookies, tokens, credentials, browser profiles, login automation, and marketplace automation out of implementation scope.
+- Preserve clean-room restrictions and anti-bot boundaries.
+
+Validation commands:
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+
+Expected evidence:
+- Changed files
+- Boundary decision summary
+- Commands run and PASS/FAIL results
+- Remaining risks or blockers
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### WBS-19 — Add fixture-only integration smoke evidence across API, web, extension, collectors, and core
+
+```text
+Read AGENTS.md first.
+Use $planning-and-task-breakdown $evidence-pack $consistency-guard.
+
+Target workstream: project-development-bootstrap
+Target module path: .
+
+Target files:
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+
+Goal:
+Connect WBS-12 through WBS-18 with fixture-only integration smoke evidence and a clean handoff.
+
+Required behavior:
+- Run full validation and direct clean-room audit.
+- Classify failures by module and fix only directly related integration blockers.
+- Preserve the WBS-05 ASGI/TestClient risk if it still reproduces.
+- Do not add real crawling, login/session/cookie/token/credential handling, browser automation, external API calls, mock-success fallback, or copied reference source/assets.
+
+Validation commands:
+- `pnpm validate:all`
+- `node tools/checks/cleanroom-audit.mjs`
+
+Expected evidence:
+- Changed files
+- Fixture-only integration summary
+- Commands run and PASS/FAIL results
+- Remaining risks or blockers
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
 ```

@@ -140,6 +140,117 @@
       "validation_commands": [
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root ."
       ]
+    },
+    {
+      "id": "WBS-12",
+      "workstream": "project-contracts",
+      "module_path": "packages/contracts",
+      "suggested_skills": [
+        "project-contracts",
+        "api-contract-change",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/contracts typecheck",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root ."
+      ]
+    },
+    {
+      "id": "WBS-13",
+      "workstream": "project-market-collectors",
+      "module_path": "packages/collectors",
+      "suggested_skills": [
+        "project-market-collectors",
+        "crawler-contract-review",
+        "privacy-boundary-review"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/collectors typecheck"
+      ]
+    },
+    {
+      "id": "WBS-14",
+      "workstream": "project-core-pipeline",
+      "module_path": "packages/core",
+      "suggested_skills": [
+        "project-core-pipeline",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/core typecheck"
+      ]
+    },
+    {
+      "id": "WBS-15",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "api-contract-change",
+        "api-error-handling-review",
+        "backend-test-matrix"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest"
+      ]
+    },
+    {
+      "id": "WBS-16",
+      "workstream": "project-frontend-design",
+      "module_path": "apps/web",
+      "suggested_skills": [
+        "project-frontend-design",
+        "frontend-product-ui",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/web typecheck",
+        "pnpm --filter @project/web test"
+      ]
+    },
+    {
+      "id": "WBS-17",
+      "workstream": "project-extension-bridge",
+      "module_path": "apps/extension",
+      "suggested_skills": [
+        "project-extension-bridge",
+        "content-script-boundary",
+        "privacy-boundary-review",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "pnpm --filter extension build",
+        "pnpm --filter @project/contracts typecheck"
+      ]
+    },
+    {
+      "id": "WBS-18",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "privacy-boundary-review",
+        "session-boundary-security",
+        "anti-bot-compliance-check"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root ."
+      ]
+    },
+    {
+      "id": "WBS-19",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "evidence-pack",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "pnpm validate:all",
+        "node tools/checks/cleanroom-audit.mjs"
+      ]
     }
   ]
 }

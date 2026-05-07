@@ -1,60 +1,54 @@
 # PLANS.md — AUTOMETA Bulsaja Clean Room Rebuild
 
-Use this file for ambiguous or multi-step work. Current slice: WBS-11 handoff/stabilization.
+Use this file for ambiguous or multi-step work. Current slice: next-phase planning after completed WBS-11 handoff.
 
 ## Goal
-- Preserve handoff-ready evidence for the completed clean-room scaffold through WBS-10.
-- Keep the next development step explicit, validation-first, and scoped.
-- Do not add product behavior in this slice.
+- Create the next development phase for actual AUTOMETA product work beyond the completed clean-room scaffold/bootstrap phase.
+- Keep this slice planning-only: update WBS, phase gates, and command queue without implementing product code.
+- Ensure `generate-next-command` selects the first new actionable WBS item after WBS-11.
 
-## Non-goals
-- No web, API, extension, collector, core, or contract feature work.
-- No validator, test, scaffold, planning, or clean-room audit weakening.
-- No reference source/assets, hidden credential/session/cookie/token handling, real marketplace crawling, mock-success fallback, or real secrets.
+## Phase Name
+Fixture-Backed Product Foundation
 
-## Current evidence
-- Files/docs read: `AGENTS.md`, `docs/planning/wbs-manifest.json`, `docs/planning/phase-gates.md`, `docs/planning/codex-command-queue.md`, `.codex/scaffold-manifest.json`, `.codex/skillset-manifest.json`, `.codex/policy.lock.json`, `git status --short`, `git log --oneline -12`.
-- Next WBS from manifest: WBS-11, `Prepare evidence pack and next-session handoff`.
-- Current dirty workspace before WBS-11 edits: `packages/collectors/package.json`, `packages/core/package.json`, `pnpm-lock.yaml`.
-- Relevant contracts: shared DTO/schema contracts in `packages/contracts/src/index.ts`; market collector contract scaffold in `packages/collectors/src/index.ts`; core pipeline scaffold in `packages/core/src/index.ts`.
-- Unknowns: ASGI TestClient/full client smoke remains deferred because TestClient hung in the WBS-05 environment.
+This phase moves from scaffold readiness to fixture-backed product behavior. It keeps live marketplace crawling, browser automation, login, session extraction, cookie handling, token handling, credential handling, and external API calls disabled unless a later approved phase explicitly opens one of those boundaries.
 
-## Completed WBS Evidence
-| WBS | Status | Evidence |
-|---|---|---|
-| WBS-00 | Done | Scope, secret boundary, and clean-room constraints confirmed; generated guidance validation passed. |
-| WBS-01 | Done | Stack decision approved: React/Vite TypeScript web, FastAPI API, Chrome MV3 extension, pnpm workspace. |
-| WBS-02 | Done | Repository scaffold generated and scaffold validation passed. |
-| WBS-03 | Done | Clean-room reference role report completed before implementation; clean-room audit passed. |
-| WBS-04 | Done | Shared DTO/schema contracts validated with `pnpm --filter @project/contracts typecheck`. |
-| WBS-05 | Done | API shell, health route, and error envelope validated with `cd apps/api && pytest`; 3 tests passed. |
-| WBS-06 | Done | Frontend shell and API envelope terminology validated through recursive typecheck/build/test in `pnpm validate:all`. |
-| WBS-07 | Done | MV3 manifest and typed extension message boundary validated through recursive typecheck/build/test and clean-room audit. |
-| WBS-08 | Done | Market collector contract scaffold validated through recursive typecheck/build/test and clean-room audit. |
-| WBS-09 | Done | Core sourcing pipeline scaffold validated through recursive typecheck/build/test and clean-room audit. |
-| WBS-10 | Done | Integration smoke evidence connected; `pnpm validate:all` passed end to end. |
+## New WBS Items
+| WBS | Phase | Workstream | Scope |
+|---|---|---|---|
+| WBS-12 | product-contracts | `project-contracts` | Expand shared sourcing job DTOs, progress/cancel/status vocabulary, typed errors, and request correlation. |
+| WBS-13 | fixture-collectors | `project-market-collectors` | Add deterministic collector fixtures and fixture result contract checks using synthetic or sanitized data only. |
+| WBS-14 | core-validation | `project-core-pipeline` | Validate core pipeline inputs/outputs against fixture collector results and preserve partial failures. |
+| WBS-15 | backend-jobs | `project-backend-api` | Implement fixture-only sourcing job API boundary with typed envelopes and tests. |
+| WBS-16 | web-jobs | `project-frontend-design` | Add web job creation/status UI states using shared API envelope vocabulary. |
+| WBS-17 | extension-job-bridge | `project-extension-bridge` | Align extension request messages with sourcing job readiness contracts without wildcard trust or session handling. |
+| WBS-18 | session-handoff-design | `project-development-bootstrap` | Document local-only browser session handoff boundaries; design only, no implementation. |
+| WBS-19 | fixture-integration | `project-development-bootstrap` | Add fixture-only integration smoke evidence across modules and keep clean-room audit passing. |
+
+## Planning Evidence
+- Files/docs inspected: `AGENTS.md`, `docs/product/PRD.md`, `docs/planning/WBS.md`, `docs/planning/wbs-manifest.json`, `docs/planning/phase-gates.md`, `docs/planning/codex-command-queue.md`, `PLANS.md`.
+- WBS-00 through WBS-11 remain marked `done`.
+- WBS-12 through WBS-19 are new `todo` items and depend sequentially on WBS-11.
+- The command queue Markdown and JSON are both updated because planning validation reads `docs/planning/codex-command-queue.json`.
+- The first generated next command should now target WBS-12, not a completed bootstrap item.
 
 ## Validation Commands
-These commands are the current PASS baseline for handoff:
-- `pnpm validate:all`
-- `python -S tools/codex/validate_scaffold.py --root .`
-- `python -S tools/codex/validate_planning.py --root .`
-- `python -S tools/codex/validate_dev_flow.py --root .`
-- `node tools/checks/workspace-check.mjs`
-- `node tools/checks/cleanroom-audit.mjs`
+Required for this planning slice:
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `python -S tools/codex/codex_skillset_generator.py generate-next-command --config codex-profile.json --root .`
 
-## Next Safe Slice
-| Slice | Scope | Files | Verification | Rollback |
-|---|---|---|---|---|
-| Post-WBS ASGI integration smoke | Add bounded FastAPI ASGI/client smoke coverage without weakening current handler tests or changing product behavior. | `apps/api/tests/*` and directly required API test support only | `cd apps/api && pytest`; then `pnpm validate:all` | Revert the new API integration smoke test/support files. |
+## Clean-Room Boundaries
+- No product code changes in this planning slice.
+- No copied reference source, assets, marketplace data, or product copy.
+- No hidden session, cookie, token, credential, or browser profile handling.
+- No real marketplace crawling, login automation, browser automation, or external API calls.
+- No mock-success fallback to hide unsupported messages, collector failures, pipeline failures, or API errors.
+- No real secrets in repository files, logs, fixtures, tests, or docs.
 
 ## Risks
-- Full ASGI TestClient/client smoke is still deferred from WBS-05 because TestClient hung in the environment. Treat this as the next validation/stabilization candidate, not as completed coverage.
-- Package-level type exports are still not formalized for internal workspace packages; current slices import `@project/contracts/src/index` and `@project/collectors/src/index`.
-- Existing dirty files from earlier dependency-linking work remain visible in `git status`: `packages/collectors/package.json`, `packages/core/package.json`, `pnpm-lock.yaml`.
+- Full ASGI TestClient/client smoke remains a carried risk from WBS-05 if the local environment still hangs; WBS-15 and WBS-19 must keep that risk visible instead of hiding it.
+- Fixture data must be synthetic or sanitized and must include provenance in WBS-13 evidence.
+- Package-level type exports are still not formalized for internal workspace packages; future slices should fix only if directly required by validation.
 
-## Completion Evidence
-- Commands run: `pnpm validate:all` PASS; `python -S tools/codex/validate_scaffold.py --root .` PASS; `python -S tools/codex/validate_planning.py --root .` PASS; `python -S tools/codex/validate_dev_flow.py --root .` PASS; `node tools/checks/workspace-check.mjs` PASS; `node tools/checks/cleanroom-audit.mjs` PASS.
-- Tests added/updated: none for this handoff slice.
-- Docs updated: `PLANS.md`, `docs/planning/codex-command-queue.md`, `docs/planning/wbs-manifest.json`.
-- Remaining issues: ASGI/client smoke deferred risk remains open; no clean-room blockers known.
+## Rollback
+Revert the planning-only edits to `PLANS.md`, `docs/planning/wbs-manifest.json`, `docs/planning/phase-gates.md`, `docs/planning/codex-command-queue.md`, and `docs/planning/codex-command-queue.json` to restore the completed WBS-11 handoff state.

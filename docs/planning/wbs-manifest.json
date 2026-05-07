@@ -412,6 +412,222 @@
         "next_safe_slice": "API ASGI integration smoke under apps/api, bounded to tests and directly required API test support.",
         "rollback": "Revert PLANS.md, docs/planning/codex-command-queue.md, and docs/planning/wbs-manifest.json to restore the prior handoff state."
       }
+    },
+    {
+      "id": "WBS-12",
+      "order": 12,
+      "phase": "product-contracts",
+      "title": "Expand sourcing job API and shared contract vocabulary",
+      "workstream": "project-contracts",
+      "module_path": "packages/contracts",
+      "suggested_skills": [
+        "project-contracts",
+        "api-contract-change",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "packages/contracts/src/index.ts",
+        "docs/contracts/api-contracts.md"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/contracts typecheck",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root ."
+      ],
+      "depends_on": [
+        "WBS-11"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, generated contract summary, blockers, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-13",
+      "order": 13,
+      "phase": "fixture-collectors",
+      "title": "Add deterministic collector fixtures and fixture result contract checks",
+      "workstream": "project-market-collectors",
+      "module_path": "packages/collectors",
+      "suggested_skills": [
+        "project-market-collectors",
+        "crawler-contract-review",
+        "privacy-boundary-review"
+      ],
+      "target_files": [
+        "packages/collectors/src/index.ts",
+        "packages/collectors/fixtures/deterministic-results.json",
+        "packages/collectors/test/fixture-contract.test.mjs"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/collectors typecheck"
+      ],
+      "depends_on": [
+        "WBS-12"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, fixture provenance, blockers, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-14",
+      "order": 14,
+      "phase": "core-validation",
+      "title": "Validate core pipeline inputs and outputs against fixture collector results",
+      "workstream": "project-core-pipeline",
+      "module_path": "packages/core",
+      "suggested_skills": [
+        "project-core-pipeline",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "packages/core/src/index.ts",
+        "packages/core/test/pipeline-fixture.test.mjs"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/core typecheck"
+      ],
+      "depends_on": [
+        "WBS-13"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, fixture validation summary, blockers, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-15",
+      "order": 15,
+      "phase": "backend-jobs",
+      "title": "Implement fixture-only sourcing job API boundary",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "api-contract-change",
+        "api-error-handling-review",
+        "backend-test-matrix"
+      ],
+      "target_files": [
+        "apps/api/app/main.py",
+        "apps/api/tests/test_sourcing_jobs.py"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest"
+      ],
+      "depends_on": [
+        "WBS-14"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, API boundary summary, blockers, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-16",
+      "order": 16,
+      "phase": "web-jobs",
+      "title": "Add web sourcing job creation and status UI states",
+      "workstream": "project-frontend-design",
+      "module_path": "apps/web",
+      "suggested_skills": [
+        "project-frontend-design",
+        "frontend-product-ui",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "apps/web/src/App.tsx",
+        "apps/web/test/app-shell.test.mjs"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/web typecheck",
+        "pnpm --filter @project/web test"
+      ],
+      "depends_on": [
+        "WBS-15"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, UI state summary, blockers, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-17",
+      "order": 17,
+      "phase": "extension-job-bridge",
+      "title": "Connect extension request messages to sourcing job readiness boundary",
+      "workstream": "project-extension-bridge",
+      "module_path": "apps/extension",
+      "suggested_skills": [
+        "project-extension-bridge",
+        "content-script-boundary",
+        "privacy-boundary-review",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "apps/extension/src/background.ts",
+        "packages/contracts/src/index.ts"
+      ],
+      "validation_commands": [
+        "pnpm --filter extension build",
+        "pnpm --filter @project/contracts typecheck"
+      ],
+      "depends_on": [
+        "WBS-16"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, message boundary summary, blockers, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-18",
+      "order": 18,
+      "phase": "session-handoff-design",
+      "title": "Document local-only browser session handoff boundaries",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "privacy-boundary-review",
+        "session-boundary-security",
+        "anti-bot-compliance-check"
+      ],
+      "target_files": [
+        "docs/architecture/local-session-handoff.md",
+        "docs/planning/phase-gates.md"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root ."
+      ],
+      "depends_on": [
+        "WBS-17"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, boundary decisions, blockers, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-19",
+      "order": 19,
+      "phase": "fixture-integration",
+      "title": "Add fixture-only integration smoke evidence across API, web, extension, collectors, and core",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "evidence-pack",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md"
+      ],
+      "validation_commands": [
+        "pnpm validate:all",
+        "node tools/checks/cleanroom-audit.mjs"
+      ],
+      "depends_on": [
+        "WBS-18"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, fixture-only integration evidence, unresolved risks, and rollback note.",
+      "status": "todo"
     }
   ]
 }
