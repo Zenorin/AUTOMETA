@@ -298,13 +298,12 @@
       "suggested_skills": [
         "planning-and-task-breakdown",
         "consistency-guard",
-        "security-and-hardening",
-        "privacy-boundary-review"
+        "evidence-pack"
       ],
       "validation_commands": [
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
-        "python -S tools/codex/codex_skillset_generator.py generate-next-command --config codex-profile.json --root .",
+        "node tools/checks/cleanroom-audit.mjs",
         "pnpm validate:all",
         "git diff --check"
       ]

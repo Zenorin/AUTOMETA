@@ -13,5 +13,11 @@
   data, service-account files, API keys, passwords, and private keys must never
   be committed, logged, serialized into DTOs, stored in fixtures, or copied into
   docs as real values.
+- WBS-20 defines controlled local runtime policy in
+  `docs/evidence/local-runtime-policy.md`. Fixture-only behavior remains the
+  default until each promotion gate passes; later runtime slices may use local
+  persisted state, but must remain local-only and must not add live crawling,
+  marketplace access, browser automation, login automation, credential/session
+  capture, secrets, or external API calls.
 - Do not delete, hide, or exclude requested feature categories without a written defer-with-contract decision and replacement validation path.
 - Use reference-analysis before contracts/schema, backend API, frontend shell, extension/collectors, and core pipeline work.

@@ -841,32 +841,38 @@ secrets, or external API calls.
 
 ```text
 Read AGENTS.md first.
-Use $planning-and-task-breakdown $consistency-guard $security-and-hardening $privacy-boundary-review.
+Use $planning-and-task-breakdown $consistency-guard $validation-first $evidence-pack.
 
 Target workstream: project-development-bootstrap
 Target module path: .
 
 Target files:
 - `PLANS.md`
-- `docs/architecture/local-runtime-policy.md`
+- `docs/architecture/boundaries.md`
 - `docs/planning/phase-gates.md`
 - `docs/planning/codex-command-queue.md`
 - `docs/planning/codex-command-queue.json`
 - `docs/planning/wbs-manifest.json`
+- `docs/evidence/local-runtime-policy.md`
 
 Goal:
 Define the local runtime execution policy and fixture-to-runtime promotion gates before any runtime implementation proceeds.
 
 Required behavior:
+- Keep this slice planning/evidence only.
 - Define local-only execution, persistence, API lifecycle, UI, extension, audit, and integration boundaries.
 - Define fixture-to-runtime promotion gates and rollback requirements.
+- Define allowed local-only runtime behaviors.
+- Define explicitly forbidden runtime behaviors.
 - Preserve WBS-05 ASGI/TestClient deferred-smoke risk.
-- Keep live crawling, marketplace access, browser automation, login/session/cookie/token handling, credentials, secrets, and external API calls disabled.
+- Keep fixture-only state as the current default.
+- Keep synthetic/sanitized fixtures as the only collector evidence source.
+- Keep live crawling, marketplace access, browser automation, login automation, credential/session/cookie/token handling, credentials, secrets, and external API calls disabled.
 
 Validation commands:
 - `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
 - `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
-- `python -S tools/codex/codex_skillset_generator.py generate-next-command --config codex-profile.json --root .`
+- `node tools/checks/cleanroom-audit.mjs`
 - `pnpm validate:all`
 - `git diff --check`
 

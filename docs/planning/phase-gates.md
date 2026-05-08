@@ -22,7 +22,7 @@
 | extension-job-bridge | `pnpm --filter extension build` passes and extension messages remain explicitly allowed, request-correlated, and unsupported-message typed | Wildcard external trust, login/session/cookie/credential extraction, live crawling, or mock success for unsupported messages |
 | session-handoff-design | Planning/dev-flow validation, clean-room audit, `pnpm validate:all`, and `git diff --check` pass; `docs/architecture/browser-session-handoff.md` documents a design-only, local-only browser/session handoff boundary with approval gates and no runtime code | Any implementation of browser automation, cookie/session/token capture, credential storage, browser profile/account data handling, marketplace access, live crawling, external API calls, or weakened clean-room validation before approval |
 | fixture-integration | `pnpm validate:all`, planning/dev-flow validation, workspace check, clean-room audit, and `git diff --check` pass with fixture-only end-to-end smoke evidence in `docs/evidence/fixture-integration-smoke.md` | Any failing module check, hidden external IO, copied source/assets, real secrets, product runtime code change, or unclassified ASGI/TestClient integration blocker |
-| local-runtime-policy | Planning/dev-flow validation and `generate-next-command` pass with WBS-20 defining local runtime execution policy and fixture-to-runtime promotion gates | Policy gaps that allow live crawling, marketplace access, browser automation, credential/session handling, external API calls, or hidden ASGI/TestClient risk |
+| local-runtime-policy | Planning/dev-flow validation, clean-room audit, `pnpm validate:all`, and `git diff --check` pass with `docs/evidence/local-runtime-policy.md` defining local runtime execution policy and fixture-to-runtime promotion gates | Policy gaps that allow live crawling, marketplace access, browser automation, login automation, credential/session/cookie/token handling, external API calls, runtime code implementation, or hidden ASGI/TestClient risk |
 | local-job-store | API tests and `pnpm validate:all` pass with a persisted local sourcing job store that stores no secrets/session material and performs no external IO | Credential/session storage, marketplace access, live crawling, hidden external IO, unsafe persistence, or weakened API tests |
 | api-job-lifecycle | API lifecycle create/read/cancel/retry tests pass against the local store with typed errors and local-only behavior | Untyped lifecycle errors, hidden background crawling, unsafe retry behavior, session handling, or ASGI/TestClient risk hidden |
 | web-local-api-lifecycle | Web typecheck/test and API tests pass with UI wired to local API lifecycle states only | UI implying live collection, broken local API contracts, missing error/cancel/retry states, or secret/session fields |
@@ -272,3 +272,23 @@ Clean-room boundaries for this phase:
   event weakening.
 - Preserve the WBS-05 full ASGI/TestClient deferred-smoke risk until a later
   slice either resolves it with evidence or keeps it explicitly carried.
+
+## WBS-20 Local Runtime Policy Evidence
+
+WBS-20 is complete when `docs/evidence/local-runtime-policy.md` defines the
+local runtime execution policy and fixture-to-runtime promotion gates without
+opening runtime product code. The completed local-runtime-policy slice must
+show:
+
+- Fixture-only behavior remains the current default.
+- Later runtime implementation may use local persisted state only after the
+  local persistence gate passes.
+- Runtime implementation remains local-only until a later go/no-go decision.
+- Synthetic/sanitized fixtures remain the only collector evidence source.
+- No live marketplace crawling, marketplace access, browser automation, login
+  automation, credential/session/cookie/token capture, secrets, or external API
+  calls are allowed by WBS-20.
+- The WBS-05 ASGI/TestClient deferred-smoke risk remains preserved.
+
+The promotion gates are: contract, fixture, local persistence, runtime audit,
+UI/API, extension boundary, integration, and WBS-28 go/no-go.

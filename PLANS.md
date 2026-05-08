@@ -1,7 +1,7 @@
 # PLANS.md — AUTOMETA Controlled Local Runtime Implementation
 
-Use this file for ambiguous or multi-step work. Current slice: next-phase
-planning after the completed Fixture-Backed Product Foundation phase.
+Use this file for ambiguous or multi-step work. Current slice: WBS-20 local
+runtime policy and fixture-to-runtime promotion gates.
 
 ## Goal
 
@@ -61,6 +61,28 @@ cookie/session/token handling, secrets, or external API calls.
   validation and next-command generation read the planning state.
 - The first generated next command should now target WBS-20.
 
+## WBS-20 Policy Slice
+
+WBS-20 is planning/evidence only. It adds
+`docs/evidence/local-runtime-policy.md` and clarifies that fixture-only behavior
+remains the default. Later WBS items may introduce local persisted state, local
+API lifecycle behavior, web/local API wiring, extension/local API readiness,
+and local audit records only after explicit promotion gates pass. WBS-20 itself
+does not implement runtime product code.
+
+Promotion gates:
+
+- Contract gate: shared DTOs/API envelopes are documented and validated.
+- Fixture gate: deterministic fixture tests pass with provenance intact.
+- Local persistence gate: persisted files contain no secrets/session material.
+- Runtime audit gate: lifecycle actions emit clean-room audit events.
+- UI/API gate: web/API behavior remains deterministic under tests.
+- Extension boundary gate: extension cannot access cookies, sessions, tokens,
+  local storage, credentials, browser profiles, account data, or marketplace
+  pages.
+- Integration gate: local-only integration smoke passes.
+- Go/no-go gate: live collection remains blocked until WBS-28.
+
 ## Validation Commands
 
 Required for this planning slice:
@@ -81,6 +103,8 @@ Required for this planning slice:
   data, or secret capture/storage/transmission.
 - No validator, test, clean-room audit, unsupported-source guard, or safety
   boundary weakening.
+- Synthetic/sanitized fixtures remain the only collector evidence source until
+  a later approved WBS changes that boundary.
 
 ## Risks
 

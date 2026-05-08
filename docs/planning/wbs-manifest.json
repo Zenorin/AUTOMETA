@@ -921,21 +921,21 @@
       "suggested_skills": [
         "planning-and-task-breakdown",
         "consistency-guard",
-        "security-and-hardening",
-        "privacy-boundary-review"
+        "evidence-pack"
       ],
       "target_files": [
         "PLANS.md",
-        "docs/architecture/local-runtime-policy.md",
+        "docs/architecture/boundaries.md",
         "docs/planning/phase-gates.md",
         "docs/planning/codex-command-queue.md",
         "docs/planning/codex-command-queue.json",
-        "docs/planning/wbs-manifest.json"
+        "docs/planning/wbs-manifest.json",
+        "docs/evidence/local-runtime-policy.md"
       ],
       "validation_commands": [
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
-        "python -S tools/codex/codex_skillset_generator.py generate-next-command --config codex-profile.json --root .",
+        "node tools/checks/cleanroom-audit.mjs",
         "pnpm validate:all",
         "git diff --check"
       ],
@@ -943,8 +943,47 @@
         "WBS-19"
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
-      "evidence": "Record changed files, commands, PASS/FAIL output, local runtime policy summary, fixture-to-runtime promotion gates, remaining risks, and rollback note.",
-      "status": "todo"
+      "evidence": "Record changed files, commands, PASS/FAIL output, local runtime policy summary, fixture-to-runtime promotion gates, clean-room boundary assertions, remaining risks, and rollback note.",
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Defined the controlled local runtime execution policy and fixture-to-runtime promotion gates before opening runtime product code.",
+        "validation": "validate-planning PASS; validate-dev-flow PASS; cleanroom-audit PASS; pnpm validate:all PASS; git diff --check PASS",
+        "changed_files": [
+          "PLANS.md",
+          "docs/architecture/boundaries.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json",
+          "docs/evidence/local-runtime-policy.md"
+        ],
+        "local_runtime_policy_summary": [
+          "Fixture-only behavior remains the current default and synthetic/sanitized fixtures remain the only collector evidence source.",
+          "Later WBS items may introduce local persisted state, local API lifecycle behavior, web/local API wiring, extension/local API readiness, and local audit records only after explicit promotion gates pass.",
+          "Runtime implementation must remain local-only until a later go/no-go decision."
+        ],
+        "fixture_to_runtime_promotion_gates": [
+          "Contract gate: shared DTOs, API envelopes, extension messages, and lifecycle errors are documented and validated.",
+          "Fixture gate: deterministic fixture tests pass with provenance intact.",
+          "Local persistence gate: persisted files contain no secrets, credentials, cookies, sessions, tokens, passwords, browser profiles, account data, marketplace responses, or external API data.",
+          "Runtime audit gate: lifecycle actions produce local clean-room audit events excluding secret/session material.",
+          "UI/API gate: web and API behavior remains deterministic under tests.",
+          "Extension boundary gate: extension code cannot access cookies, sessions, tokens, local storage, credentials, browser profiles, account data, or marketplace pages.",
+          "Integration gate: local-only integration smoke passes with clean-room audit passing.",
+          "Go/no-go gate: live collection remains blocked until the WBS-28 decision explicitly approves a later limited boundary."
+        ],
+        "clean_room_boundary_assertions": [
+          "WBS-20 is planning/evidence only and does not implement runtime product code, API runtime actions, a persisted job store, live crawling, marketplace access, browser automation, login automation, credential/session/cookie/token capture, secrets, or external API calls.",
+          "No validators, tests, clean-room audit, unsupported-source guards, or safety boundaries were weakened.",
+          "The WBS-05 full ASGI/TestClient deferred-smoke risk remains preserved."
+        ],
+        "risks": [
+          "WBS-21 through WBS-24 will introduce local runtime behavior and must prove local-only execution with no external IO.",
+          "WBS-25 must remain a stub and must not read browser state or capture credential/session material.",
+          "WBS-28 is a decision gate only and must not enable live collection by itself."
+        ],
+        "rollback": "Revert the WBS-20 policy evidence, boundary, phase gate, command queue, compact command queue JSON, manifest, and PLANS.md changes to restore the pre-WBS-20 planning state."
+      }
     },
     {
       "id": "WBS-21",
