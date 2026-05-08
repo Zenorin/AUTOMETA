@@ -290,6 +290,178 @@
         "node tools/checks/cleanroom-audit.mjs",
         "git diff --check"
       ]
+    },
+    {
+      "id": "WBS-20",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "consistency-guard",
+        "security-and-hardening",
+        "privacy-boundary-review"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "python -S tools/codex/codex_skillset_generator.py generate-next-command --config codex-profile.json --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ]
+    },
+    {
+      "id": "WBS-21",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "backend-test-matrix",
+        "consistency-guard",
+        "security-and-hardening"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ]
+    },
+    {
+      "id": "WBS-22",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "api-contract-change",
+        "api-error-handling-review",
+        "backend-test-matrix",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest",
+        "pnpm --filter @project/contracts test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ]
+    },
+    {
+      "id": "WBS-23",
+      "workstream": "project-frontend-design",
+      "module_path": "apps/web",
+      "suggested_skills": [
+        "project-frontend-design",
+        "frontend-product-ui",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/web typecheck",
+        "pnpm --filter @project/web test",
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ]
+    },
+    {
+      "id": "WBS-24",
+      "workstream": "project-extension-bridge",
+      "module_path": "apps/extension",
+      "suggested_skills": [
+        "project-extension-bridge",
+        "content-script-boundary",
+        "privacy-boundary-review",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "pnpm --filter extension typecheck",
+        "pnpm --filter extension build",
+        "pnpm --filter extension test",
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ]
+    },
+    {
+      "id": "WBS-25",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "privacy-boundary-review",
+        "session-boundary-security",
+        "anti-bot-compliance-check",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
+        "pnpm validate:all",
+        "git diff --check"
+      ]
+    },
+    {
+      "id": "WBS-26",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "privacy-boundary-review",
+        "security-and-hardening",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest",
+        "node tools/checks/cleanroom-audit.mjs",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ]
+    },
+    {
+      "id": "WBS-27",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "test-driven-development",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "validation_commands": [
+        "pnpm validate:all",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/workspace-check.mjs",
+        "node tools/checks/cleanroom-audit.mjs",
+        "git diff --check"
+      ]
+    },
+    {
+      "id": "WBS-28",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "security-and-hardening",
+        "privacy-boundary-review",
+        "anti-bot-compliance-check",
+        "consistency-guard"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
+        "pnpm validate:all",
+        "git diff --check"
+      ]
     }
   ]
 }

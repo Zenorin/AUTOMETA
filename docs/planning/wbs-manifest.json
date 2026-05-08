@@ -910,6 +910,325 @@
         "next_rollout_decision": "Proceed only to a separately approved product slice; WBS-19 does not approve live marketplace, browser/session, automation, or external network behavior.",
         "rollback": "Revert the WBS-19 evidence document, phase gate, command queue, compact command queue JSON, and manifest changes to restore the pre-WBS-19 planning state."
       }
+    },
+    {
+      "id": "WBS-20",
+      "order": 20,
+      "phase": "local-runtime-policy",
+      "title": "Define local runtime execution policy and fixture-to-runtime promotion gates",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "consistency-guard",
+        "security-and-hardening",
+        "privacy-boundary-review"
+      ],
+      "target_files": [
+        "PLANS.md",
+        "docs/architecture/local-runtime-policy.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "python -S tools/codex/codex_skillset_generator.py generate-next-command --config codex-profile.json --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-19"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, local runtime policy summary, fixture-to-runtime promotion gates, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-21",
+      "order": 21,
+      "phase": "local-job-store",
+      "title": "Implement persisted local sourcing job store",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "backend-test-matrix",
+        "consistency-guard",
+        "security-and-hardening"
+      ],
+      "target_files": [
+        "apps/api/app/*.py",
+        "apps/api/tests/*.py",
+        "docs/planning/phase-gates.md",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-20"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, local store schema/retention summary, secret/session exclusion evidence, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-22",
+      "order": 22,
+      "phase": "api-job-lifecycle",
+      "title": "Add API job lifecycle actions: create, read, cancel, retry",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "api-contract-change",
+        "api-error-handling-review",
+        "backend-test-matrix",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "apps/api/app/*.py",
+        "apps/api/tests/*.py",
+        "packages/contracts/src/index.ts",
+        "packages/contracts/test/*.test.mjs",
+        "docs/contracts/api-contracts.md",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest",
+        "pnpm --filter @project/contracts test",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-21"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, API lifecycle summary, typed error/cancel/retry evidence, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-23",
+      "order": 23,
+      "phase": "web-local-api-lifecycle",
+      "title": "Connect web UI to real local API job lifecycle",
+      "workstream": "project-frontend-design",
+      "module_path": "apps/web",
+      "suggested_skills": [
+        "project-frontend-design",
+        "frontend-product-ui",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "apps/web/src/*.tsx",
+        "apps/web/src/*.ts",
+        "apps/web/test/*.test.mjs",
+        "docs/planning/phase-gates.md",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "pnpm --filter @project/web typecheck",
+        "pnpm --filter @project/web test",
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-22"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, web local API lifecycle summary, UI state coverage, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-24",
+      "order": 24,
+      "phase": "extension-local-api-readiness",
+      "title": "Connect extension readiness messages to local API boundary",
+      "workstream": "project-extension-bridge",
+      "module_path": "apps/extension",
+      "suggested_skills": [
+        "project-extension-bridge",
+        "content-script-boundary",
+        "privacy-boundary-review",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "apps/extension/src/background.ts",
+        "apps/extension/src/content.ts",
+        "apps/extension/test/*.test.mjs",
+        "docs/contracts/extension-message-contracts.md",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "pnpm --filter extension typecheck",
+        "pnpm --filter extension build",
+        "pnpm --filter extension test",
+        "cd apps/api && pytest",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-23"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, extension local API readiness summary, content-script boundary evidence, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-25",
+      "order": 25,
+      "phase": "browser-session-stub",
+      "title": "Add controlled local browser-session handoff stub without credential capture",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "privacy-boundary-review",
+        "session-boundary-security",
+        "anti-bot-compliance-check",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "docs/architecture/browser-session-handoff.md",
+        "docs/architecture/local-runtime-policy.md",
+        "docs/evidence/*.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
+        "pnpm validate:all",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-24"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, stub boundary summary, credential/session non-capture evidence, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-26",
+      "order": 26,
+      "phase": "runtime-audit-log",
+      "title": "Add runtime audit log and clean-room safety event records",
+      "workstream": "project-backend-api",
+      "module_path": "apps/api",
+      "suggested_skills": [
+        "project-backend-api",
+        "privacy-boundary-review",
+        "security-and-hardening",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "apps/api/app/*.py",
+        "apps/api/tests/*.py",
+        "docs/evidence/*.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "cd apps/api && pytest",
+        "node tools/checks/cleanroom-audit.mjs",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "pnpm validate:all",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-25"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, audit log summary, safety event schema, secret/session exclusion evidence, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-27",
+      "order": 27,
+      "phase": "local-runtime-integration",
+      "title": "Add local-only integration tests across API, web, extension, collectors, and core",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "test-driven-development",
+        "consistency-guard",
+        "evidence-pack"
+      ],
+      "target_files": [
+        "apps/api/tests/*.py",
+        "apps/web/test/*.test.mjs",
+        "apps/extension/test/*.test.mjs",
+        "packages/collectors/test/*.test.mjs",
+        "packages/core/test/*.test.mjs",
+        "docs/evidence/*.md",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "pnpm validate:all",
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/workspace-check.mjs",
+        "node tools/checks/cleanroom-audit.mjs",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-26"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, local-only integration summary, module coverage, ASGI/TestClient risk status, remaining risks, and rollback note.",
+      "status": "todo"
+    },
+    {
+      "id": "WBS-28",
+      "order": 28,
+      "phase": "live-boundary-go-no-go",
+      "title": "Prepare go/no-go decision for opening limited live collection boundary",
+      "workstream": "project-development-bootstrap",
+      "module_path": ".",
+      "suggested_skills": [
+        "planning-and-task-breakdown",
+        "security-and-hardening",
+        "privacy-boundary-review",
+        "anti-bot-compliance-check",
+        "consistency-guard"
+      ],
+      "target_files": [
+        "docs/evidence/live-boundary-go-no-go.md",
+        "docs/architecture/boundaries.md",
+        "docs/architecture/local-runtime-policy.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/wbs-manifest.json"
+      ],
+      "validation_commands": [
+        "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
+        "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
+        "pnpm validate:all",
+        "git diff --check"
+      ],
+      "depends_on": [
+        "WBS-27"
+      ],
+      "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
+      "evidence": "Record changed files, commands, PASS/FAIL output, go/no-go decision summary, approval/risk checklist, explicit non-enablement statement, remaining risks, and rollback note.",
+      "status": "todo"
     }
   ]
 }

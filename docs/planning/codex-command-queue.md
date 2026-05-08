@@ -828,3 +828,269 @@ Expected evidence:
 - Remaining risks or blockers
 - Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
 ```
+
+## Controlled Local Runtime Implementation
+
+This phase starts after WBS-19 and remains local-only. It may introduce local
+runtime behavior, persistence, lifecycle actions, safety events, and local
+integration tests, but it must not open live crawling, marketplace access,
+browser automation, login automation, credential/session/cookie/token handling,
+secrets, or external API calls.
+
+### WBS-20 — Define local runtime execution policy and fixture-to-runtime promotion gates
+
+```text
+Read AGENTS.md first.
+Use $planning-and-task-breakdown $consistency-guard $security-and-hardening $privacy-boundary-review.
+
+Target workstream: project-development-bootstrap
+Target module path: .
+
+Target files:
+- `PLANS.md`
+- `docs/architecture/local-runtime-policy.md`
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
+
+Goal:
+Define the local runtime execution policy and fixture-to-runtime promotion gates before any runtime implementation proceeds.
+
+Required behavior:
+- Define local-only execution, persistence, API lifecycle, UI, extension, audit, and integration boundaries.
+- Define fixture-to-runtime promotion gates and rollback requirements.
+- Preserve WBS-05 ASGI/TestClient deferred-smoke risk.
+- Keep live crawling, marketplace access, browser automation, login/session/cookie/token handling, credentials, secrets, and external API calls disabled.
+
+Validation commands:
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `python -S tools/codex/codex_skillset_generator.py generate-next-command --config codex-profile.json --root .`
+- `pnpm validate:all`
+- `git diff --check`
+
+Expected evidence:
+- Changed files
+- Local runtime policy summary
+- Promotion gate summary
+- Commands run and PASS/FAIL results
+- Remaining risks or blockers
+- Rollback note: Revert this slice and restore prior generated files/backups if validation fails.
+```
+
+### WBS-21 — Implement persisted local sourcing job store
+
+```text
+Read AGENTS.md first.
+Use $project-backend-api $backend-test-matrix $consistency-guard $security-and-hardening.
+
+Target workstream: project-backend-api
+Target module path: apps/api
+
+Goal:
+Implement a persisted local sourcing job store without enabling external IO or storing secret/session material.
+
+Required behavior:
+- Store local sourcing job records, status, timestamps, cancel/retry state, and fixture/runtime promotion metadata.
+- Keep storage local-only and deterministic for tests.
+- Do not store credentials, cookies, sessions, tokens, browser profiles, account data, marketplace responses, or secrets.
+- Do not add marketplace access, live crawling, browser automation, login automation, or external API calls.
+
+Validation commands:
+- `cd apps/api && pytest`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
+```
+
+### WBS-22 — Add API job lifecycle actions: create, read, cancel, retry
+
+```text
+Read AGENTS.md first.
+Use $project-backend-api $api-contract-change $api-error-handling-review $backend-test-matrix $consistency-guard.
+
+Target workstream: project-backend-api
+Target module path: apps/api
+
+Goal:
+Add local API job lifecycle actions for create, read, cancel, and retry using the persisted local job store.
+
+Required behavior:
+- Preserve typed envelopes, request/correlation IDs, lifecycle states, cancel/retry semantics, and unsupported-source errors.
+- Keep retries local-only and do not start live collection.
+- Keep ASGI/TestClient risk visible if it still reproduces.
+- Do not add marketplace access, live crawling, browser automation, login/session/cookie/token handling, secrets, or external API calls.
+
+Validation commands:
+- `cd apps/api && pytest`
+- `pnpm --filter @project/contracts test`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
+```
+
+### WBS-23 — Connect web UI to real local API job lifecycle
+
+```text
+Read AGENTS.md first.
+Use $project-frontend-design $frontend-product-ui $consistency-guard.
+
+Target workstream: project-frontend-design
+Target module path: apps/web
+
+Goal:
+Connect web job creation/status UI states to the real local API lifecycle without implying live collection.
+
+Required behavior:
+- Wire create/read/cancel/retry UI paths to local API lifecycle responses.
+- Preserve loading, empty, queued, running, completed, failed, cancelled, retry, and unsupported-source states.
+- Keep clean-room/local-only copy visible.
+- Do not add marketplace access, live crawling, browser automation, login/session/cookie/token handling, secrets, or external API calls beyond the local API boundary.
+
+Validation commands:
+- `pnpm --filter @project/web typecheck`
+- `pnpm --filter @project/web test`
+- `cd apps/api && pytest`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
+```
+
+### WBS-24 — Connect extension readiness messages to local API boundary
+
+```text
+Read AGENTS.md first.
+Use $project-extension-bridge $content-script-boundary $privacy-boundary-review $consistency-guard.
+
+Target workstream: project-extension-bridge
+Target module path: apps/extension
+
+Goal:
+Connect extension readiness messages to the local API boundary without page access, session access, or browser automation.
+
+Required behavior:
+- Align readiness/status/cancel/retry messages with local API lifecycle vocabulary.
+- Preserve explicit sender trust, requestId/correlationId handling, and typed unsupported errors.
+- Keep content script inert for browser data and page state.
+- Do not read cookies, sessions, tokens, credentials, local storage, browser profiles, account data, or marketplace pages.
+
+Validation commands:
+- `pnpm --filter extension typecheck`
+- `pnpm --filter extension build`
+- `pnpm --filter extension test`
+- `cd apps/api && pytest`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
+```
+
+### WBS-25 — Add controlled local browser-session handoff stub without credential capture
+
+```text
+Read AGENTS.md first.
+Use $planning-and-task-breakdown $privacy-boundary-review $session-boundary-security $anti-bot-compliance-check $consistency-guard.
+
+Target workstream: project-development-bootstrap
+Target module path: .
+
+Goal:
+Add a controlled local browser-session handoff stub that records approval metadata only and captures no credentials or browser state.
+
+Required behavior:
+- Implement stub/marker behavior only if approved by WBS-20 policy gates.
+- Store metadata-only approval state; do not read, export, store, or transmit browser session material.
+- Preserve design boundaries from `docs/architecture/browser-session-handoff.md`.
+- Do not add Playwright, Selenium, Puppeteer, browser automation, login automation, marketplace access, live crawling, secrets, or external API calls.
+
+Validation commands:
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/cleanroom-audit.mjs`
+- `pnpm validate:all`
+- `git diff --check`
+```
+
+### WBS-26 — Add runtime audit log and clean-room safety event records
+
+```text
+Read AGENTS.md first.
+Use $project-backend-api $privacy-boundary-review $security-and-hardening $consistency-guard.
+
+Target workstream: project-backend-api
+Target module path: apps/api
+
+Goal:
+Add local runtime audit log and clean-room safety event records for lifecycle actions and blocked boundaries.
+
+Required behavior:
+- Record local job lifecycle events, safety decisions, blocked unsupported sources, cancel/retry actions, and policy-gate outcomes.
+- Exclude credentials, cookies, sessions, tokens, browser profiles, account data, marketplace payloads, and secrets from logs.
+- Keep audit records local-only and testable.
+- Do not add marketplace access, live crawling, browser automation, login automation, or external API calls.
+
+Validation commands:
+- `cd apps/api && pytest`
+- `node tools/checks/cleanroom-audit.mjs`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `pnpm validate:all`
+- `git diff --check`
+```
+
+### WBS-27 — Add local-only integration tests across API, web, extension, collectors, and core
+
+```text
+Read AGENTS.md first.
+Use $planning-and-task-breakdown $test-driven-development $consistency-guard $evidence-pack.
+
+Target workstream: project-development-bootstrap
+Target module path: .
+
+Goal:
+Add local-only integration tests across API, web, extension, collectors, and core without external IO.
+
+Required behavior:
+- Exercise local job lifecycle from API through web and extension boundaries using deterministic collector/core behavior.
+- Prove unsupported live sources remain rejected.
+- Preserve WBS-05 ASGI/TestClient risk visibility if it still reproduces.
+- Do not add marketplace access, live crawling, browser automation, login/session/cookie/token handling, secrets, or external API calls.
+
+Validation commands:
+- `pnpm validate:all`
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/workspace-check.mjs`
+- `node tools/checks/cleanroom-audit.mjs`
+- `git diff --check`
+```
+
+### WBS-28 — Prepare go/no-go decision for opening limited live collection boundary
+
+```text
+Read AGENTS.md first.
+Use $planning-and-task-breakdown $security-and-hardening $privacy-boundary-review $anti-bot-compliance-check $consistency-guard.
+
+Target workstream: project-development-bootstrap
+Target module path: .
+
+Goal:
+Prepare a go/no-go decision for opening a limited live collection boundary without enabling that boundary in this slice.
+
+Required behavior:
+- Document decision criteria, required approvals, risk register, rollback plan, anti-bot compliance evidence, privacy/security gates, and validation requirements.
+- Require explicit future approval before any live collection, marketplace access, browser automation, credential/session handling, or external API calls.
+- Keep current runtime local-only.
+- Do not implement or enable live collection.
+
+Validation commands:
+- `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
+- `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/cleanroom-audit.mjs`
+- `pnpm validate:all`
+- `git diff --check`
+```

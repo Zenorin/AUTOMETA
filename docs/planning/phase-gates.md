@@ -22,6 +22,15 @@
 | extension-job-bridge | `pnpm --filter extension build` passes and extension messages remain explicitly allowed, request-correlated, and unsupported-message typed | Wildcard external trust, login/session/cookie/credential extraction, live crawling, or mock success for unsupported messages |
 | session-handoff-design | Planning/dev-flow validation, clean-room audit, `pnpm validate:all`, and `git diff --check` pass; `docs/architecture/browser-session-handoff.md` documents a design-only, local-only browser/session handoff boundary with approval gates and no runtime code | Any implementation of browser automation, cookie/session/token capture, credential storage, browser profile/account data handling, marketplace access, live crawling, external API calls, or weakened clean-room validation before approval |
 | fixture-integration | `pnpm validate:all`, planning/dev-flow validation, workspace check, clean-room audit, and `git diff --check` pass with fixture-only end-to-end smoke evidence in `docs/evidence/fixture-integration-smoke.md` | Any failing module check, hidden external IO, copied source/assets, real secrets, product runtime code change, or unclassified ASGI/TestClient integration blocker |
+| local-runtime-policy | Planning/dev-flow validation and `generate-next-command` pass with WBS-20 defining local runtime execution policy and fixture-to-runtime promotion gates | Policy gaps that allow live crawling, marketplace access, browser automation, credential/session handling, external API calls, or hidden ASGI/TestClient risk |
+| local-job-store | API tests and `pnpm validate:all` pass with a persisted local sourcing job store that stores no secrets/session material and performs no external IO | Credential/session storage, marketplace access, live crawling, hidden external IO, unsafe persistence, or weakened API tests |
+| api-job-lifecycle | API lifecycle create/read/cancel/retry tests pass against the local store with typed errors and local-only behavior | Untyped lifecycle errors, hidden background crawling, unsafe retry behavior, session handling, or ASGI/TestClient risk hidden |
+| web-local-api-lifecycle | Web typecheck/test and API tests pass with UI wired to local API lifecycle states only | UI implying live collection, broken local API contracts, missing error/cancel/retry states, or secret/session fields |
+| extension-local-api-readiness | Extension typecheck/build/test pass with readiness messages aligned to the local API boundary and no page/session access | Wildcard trust, content-script data extraction, credential/session access, marketplace URL access, or browser automation |
+| browser-session-stub | Planning/security/privacy checks pass with a local-only stub that captures no credentials, cookies, tokens, sessions, browser profiles, or account data | Any browser state read/export, credential capture, login automation, marketplace access, or permission expansion without approval |
+| runtime-audit-log | API/tests pass with local audit and clean-room safety event records that exclude secrets/session material | Logs containing credentials/session data, missing safety events, external egress, or audit records that mask failures |
+| local-runtime-integration | Local-only integration tests pass across API, web, extension, collectors, and core with clean-room audit passing | Live network access, marketplace crawling, browser automation, hidden session handling, or fixture-to-runtime contract drift |
+| live-boundary-go-no-go | Go/no-go decision evidence is documented and validation passes without enabling live collection | Any runtime enablement of live crawling, marketplace access, browser automation, credential/session handling, or external API calls |
 
 ## WBS-10 Integration Evidence
 
@@ -231,3 +240,35 @@ live marketplace access, live crawling, browser automation, login/session
 cookie/token handling, credential handling, secrets, and external API calls
 disabled. The WBS-05 ASGI/TestClient deferred-smoke risk remains documented
 instead of being hidden by WBS-19.
+
+## Next Phase: Controlled Local Runtime Implementation
+
+The next development phase starts after completed WBS-19 fixture integration
+evidence. It promotes fixture-backed behavior into controlled local runtime
+steps while keeping live crawling, marketplace access, browser automation,
+login automation, credential/session/cookie/token handling, secrets, and
+external API calls disabled unless a later approved go/no-go gate explicitly
+opens one narrow boundary.
+
+| WBS | Phase | Gate intent |
+|---|---|---|
+| WBS-20 | local-runtime-policy | Define local runtime execution policy and fixture-to-runtime promotion gates before implementation. |
+| WBS-21 | local-job-store | Implement persisted local sourcing job store with no credential/session material and no external IO. |
+| WBS-22 | api-job-lifecycle | Add local API job lifecycle actions for create, read, cancel, and retry. |
+| WBS-23 | web-local-api-lifecycle | Connect web UI to the real local API job lifecycle while preserving local-only states. |
+| WBS-24 | extension-local-api-readiness | Connect extension readiness messages to the local API boundary without page/session access. |
+| WBS-25 | browser-session-stub | Add controlled local browser-session handoff stub without credential capture or browser state reads. |
+| WBS-26 | runtime-audit-log | Add runtime audit log and clean-room safety event records excluding secrets/session material. |
+| WBS-27 | local-runtime-integration | Add local-only integration tests across API, web, extension, collectors, and core. |
+| WBS-28 | live-boundary-go-no-go | Prepare a go/no-go decision for opening a limited live collection boundary; decision only, no enablement. |
+
+Clean-room boundaries for this phase:
+- No copied reference source, assets, marketplace data, or product copy.
+- No live marketplace crawling, marketplace access, browser automation, login
+  automation, external API calls, or hidden network egress.
+- No cookie, session, token, password, credential, browser profile, account
+  data, service-account file, API key, private key, or secret capture/storage.
+- No validator, test, clean-room audit, unsupported-source guard, or safety
+  event weakening.
+- Preserve the WBS-05 full ASGI/TestClient deferred-smoke risk until a later
+  slice either resolves it with evidence or keeps it explicitly carried.
