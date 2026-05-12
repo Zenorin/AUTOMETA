@@ -292,3 +292,24 @@ show:
 
 The promotion gates are: contract, fixture, local persistence, runtime audit,
 UI/API, extension boundary, integration, and WBS-28 go/no-go.
+
+## WBS-21 Local Persisted Store Evidence
+
+WBS-21 is complete when the API has a persisted local sourcing job store for
+local-only runtime state and all validation commands pass. The completed
+local-job-store slice must show:
+
+- Persisted state uses a repo-local `.runtime/sourcing-jobs.json` default path
+  and isolated temp files in tests.
+- The persisted document is versioned and stores only safe job metadata,
+  fixture IDs, timestamps, status, result summary, and typed error metadata.
+- No cookies, sessions, tokens, secrets, passwords, credentials,
+  authorization values, browser storage, marketplace login data, real external
+  URLs, or account identifiers are persisted.
+- Fixture-only collector evidence remains the active data source.
+- Existing fixture-only API behavior from WBS-15 is preserved.
+- Tests cover create, reload, status update, deterministic result summary,
+  invalid job ID, secret-like field rejection, and local test cleanup.
+
+This slice does not add live crawling, marketplace access, external API calls,
+browser automation, login automation, or credential/session handling.

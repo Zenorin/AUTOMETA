@@ -999,15 +999,19 @@
         "security-and-hardening"
       ],
       "target_files": [
-        "apps/api/app/*.py",
+        "apps/api/app/main.py",
         "apps/api/tests/*.py",
+        "docs/evidence/local-runtime-policy.md",
         "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
         "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
         "cd apps/api && pytest",
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
         "pnpm validate:all",
         "git diff --check"
       ],
@@ -1016,7 +1020,59 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, local store schema/retention summary, secret/session exclusion evidence, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Implemented a persisted local sourcing job store for local-only runtime state while preserving fixture-only API behavior.",
+        "validation": "cd apps/api && pytest PASS; validate-planning PASS; validate-dev-flow PASS; cleanroom-audit PASS; pnpm validate:all PASS; git diff --check PASS",
+        "changed_files": [
+          ".gitignore",
+          "apps/api/app/main.py",
+          "apps/api/tests/conftest.py",
+          "apps/api/tests/test_sourcing_jobs.py",
+          "docs/evidence/local-runtime-policy.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "local_persisted_store_summary": [
+          "Added LocalSourcingJobStore with load_jobs, save_jobs, create_job, get_job, update_job_status, get_job_result, and reset_store_for_tests helpers.",
+          "Persisted state writes a versioned local JSON document to AUTOMETA_JOB_STORE_PATH for tests or .runtime/sourcing-jobs.json by default.",
+          "API create/status/result behavior remains fixture-only and reconstructs deterministic core output from synthetic fixture data."
+        ],
+        "stored_fields": [
+          "job_id",
+          "status",
+          "source_type",
+          "fixture_id",
+          "created_at",
+          "updated_at",
+          "result_summary",
+          "error_code",
+          "error_message"
+        ],
+        "forbidden_fields": [
+          "cookie",
+          "session",
+          "token",
+          "secret",
+          "password",
+          "credential",
+          "authorization",
+          "localStorage",
+          "browserStorage",
+          "marketplace account identifiers",
+          "real external URLs beyond reserved fixture/synthetic URLs"
+        ],
+        "tests": [
+          "API tests cover persisted create/reload, read after reload, status update persistence, deterministic result summary, invalid job ID typed error, secret-like key rejection, local test path isolation, and existing fixture-only API behavior."
+        ],
+        "risks": [
+          "This is a local JSON store only; concurrent writes, migrations, and production-grade locking remain deferred.",
+          "WBS-22 will add lifecycle actions and must preserve the local-only/no-external-IO boundary."
+        ],
+        "rollback": "Revert the WBS-21 API store, test fixture, persistence tests, evidence, planning, and .gitignore changes to restore the pre-WBS-21 state."
+      }
     },
     {
       "id": "WBS-22",

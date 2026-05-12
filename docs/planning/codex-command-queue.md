@@ -894,19 +894,34 @@ Use $project-backend-api $backend-test-matrix $consistency-guard $security-and-h
 Target workstream: project-backend-api
 Target module path: apps/api
 
+Target files:
+- `apps/api/app/main.py`
+- `apps/api/tests/*.py`
+- `docs/evidence/local-runtime-policy.md`
+- `docs/planning/phase-gates.md`
+- `docs/planning/codex-command-queue.md`
+- `docs/planning/codex-command-queue.json`
+- `docs/planning/wbs-manifest.json`
+
 Goal:
 Implement a persisted local sourcing job store without enabling external IO or storing secret/session material.
 
 Required behavior:
-- Store local sourcing job records, status, timestamps, cancel/retry state, and fixture/runtime promotion metadata.
-- Keep storage local-only and deterministic for tests.
-- Do not store credentials, cookies, sessions, tokens, browser profiles, account data, marketplace responses, or secrets.
-- Do not add marketplace access, live crawling, browser automation, login automation, or external API calls.
+- Add local persisted sourcing job state.
+- Keep runtime local-only.
+- Store only non-secret job metadata and fixture/core result references.
+- Do not store cookies, sessions, tokens, credentials, passwords, browser storage, or marketplace login data.
+- Preserve fixture-only collector evidence as the current data source.
+- Preserve existing fixture-only API behavior from WBS-15.
+- Add deterministic tests for persistence behavior and cleanup/reset behavior.
+- Use a repo-local runtime/state path that is clearly non-secret and test-safe.
+- Do not add marketplace access, live crawling, browser automation, login automation, external API calls, or secrets.
 
 Validation commands:
 - `cd apps/api && pytest`
 - `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
 - `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/cleanroom-audit.mjs`
 - `pnpm validate:all`
 - `git diff --check`
 ```

@@ -1,18 +1,25 @@
 import json
+from pathlib import Path
 from typing import Any
 
+import pytest
 from fastapi import Response
 from fastapi.responses import JSONResponse
 
 from app.main import (
     CORRELATION_ID_HEADER,
     FIXTURE_JOB_ID,
+    FIXTURE_REQUESTED_AT,
+    LocalSourcingJobStore,
     SCHEMA_VERSION,
+    _JOB_STORE,
+    _load_persisted_store,
     app,
     create_sourcing_job,
     get_sourcing_job,
     get_sourcing_job_result,
     health,
+    update_job_status,
 )
 
 
@@ -165,6 +172,241 @@ def test_no_secret_session_cookie_or_token_fields_are_exposed() -> None:
     )
     assert isinstance(blocked, JSONResponse)
     assert json.loads(blocked.body)["error"]["details"] == [{"kind": "field", "field": "body", "issue": "unsupported"}]
+
+
+def test_persisted_job_survives_reload(isolated_store: Path) -> None:
+    _create_job()
+
+    assert FIXTURE_JOB_ID in _JOB_STORE
+    assert _JOB_STORE[FIXTURE_JOB_ID]["job"]["status"] == "completed"
+
+    assert isolated_store.exists()
+    with isolated_store.open(encoding="utf-8") as f:
+        document = json.load(f)
+
+    assert document["kind"] == "local-sourcing-job-store"
+    assert document["schemaVersion"] == SCHEMA_VERSION
+    assert document["storeVersion"] == "2026-05-12.wbs-21"
+    assert document["storage"] == "local-only-safe"
+    assert document["jobs"][FIXTURE_JOB_ID] == {
+        "job_id": FIXTURE_JOB_ID,
+        "status": "completed",
+        "source_type": "fixture",
+        "fixture_id": "deterministic-collector-fixtures",
+        "created_at": FIXTURE_REQUESTED_AT,
+        "updated_at": "2026-05-07T00:00:05.000Z",
+        "result_summary": {
+            "kind": "sourcing-job-result-summary",
+            "jobId": FIXTURE_JOB_ID,
+            "status": "completed",
+            "markets": ["naver", "coupang", "unknown"],
+            "itemCount": 2,
+            "failureCount": 2,
+            "collectorStatuses": ["success", "partial", "failed"],
+            "completedAt": "2026-05-07T00:00:05.000Z",
+        },
+        "error_code": "collector-failed",
+        "error_message": "Synthetic retry-after fixture; no network request was made.",
+    }
+
+    _JOB_STORE.clear()
+    assert FIXTURE_JOB_ID not in _JOB_STORE
+
+    _load_persisted_store()
+    assert FIXTURE_JOB_ID in _JOB_STORE
+    assert _JOB_STORE[FIXTURE_JOB_ID]["job"]["status"] == "completed"
+
+
+def test_get_job_after_reload() -> None:
+    _create_job()
+
+    _JOB_STORE.clear()
+    _load_persisted_store()
+
+    request = _RequestStub({CORRELATION_ID_HEADER: "reload-correlation"})
+    response = Response()
+
+    body = get_sourcing_job(FIXTURE_JOB_ID, request, response)
+
+    assert not isinstance(body, JSONResponse)
+    assert body["ok"] is True
+    assert body["data"]["jobId"] == FIXTURE_JOB_ID
+    assert body["data"]["status"] == "completed"
+
+
+def test_get_job_result_after_reload() -> None:
+    _create_job()
+
+    _JOB_STORE.clear()
+    _load_persisted_store()
+
+    request = _RequestStub({CORRELATION_ID_HEADER: "result-reload-correlation"})
+    response = Response()
+
+    result_body = get_sourcing_job_result(FIXTURE_JOB_ID, request, response)
+
+    assert not isinstance(result_body, JSONResponse)
+    assert result_body["ok"] is True
+    result = result_body["data"]
+    assert result["kind"] == "core-pipeline-result"
+    assert result["status"] == "partial_failure"
+    assert result["summary"]["itemCount"] == 2
+    assert result["summary"]["failureCount"] == 2
+
+
+def test_update_job_status_persists_to_local_store(isolated_store: Path) -> None:
+    _create_job()
+
+    updated = update_job_status(
+        FIXTURE_JOB_ID,
+        "failed",
+        error_code="validation-failed",
+        error_message="Synthetic local store status update.",
+    )
+
+    assert updated is not None
+    assert updated["job"]["status"] == "failed"
+    assert updated["job"]["resultSummary"]["status"] == "failed"
+
+    _JOB_STORE.clear()
+    _load_persisted_store()
+    assert _JOB_STORE[FIXTURE_JOB_ID]["job"]["status"] == "failed"
+
+    with isolated_store.open(encoding="utf-8") as f:
+        document = json.load(f)
+    persisted = document["jobs"][FIXTURE_JOB_ID]
+    assert persisted["status"] == "failed"
+    assert persisted["error_code"] == "validation-failed"
+    assert persisted["error_message"] == "Synthetic local store status update."
+
+
+def test_persisted_store_does_not_contain_secrets(isolated_store: Path) -> None:
+    _create_job()
+
+    assert isolated_store.exists()
+    with isolated_store.open(encoding="utf-8") as f:
+        serialized = f.read()
+
+    forbidden_keys = [
+        "accessToken",
+        "authorization",
+        "browserStorage",
+        "credential",
+        "secret",
+        "refreshToken",
+        "password",
+        "cookie",
+        "cookies",
+        "session",
+        "sessionBoundary",
+        "sessionMaterial",
+        "sessionRef",
+        "token",
+        "localStorage",
+    ]
+
+    for key in forbidden_keys:
+        assert key not in serialized, f"Persisted store should not contain key: {key}"
+
+
+def test_local_store_rejects_secret_like_persisted_fields(isolated_store: Path) -> None:
+    store = LocalSourcingJobStore(isolated_store)
+    _create_job()
+    poisoned = dict(_JOB_STORE)
+    poisoned[FIXTURE_JOB_ID]["job"]["authorization"] = "Bearer not-allowed"
+
+    with pytest.raises(ValueError, match="Forbidden persisted field"):
+        store.save_jobs(poisoned)
+
+
+def test_local_store_uses_only_test_configured_path(isolated_store: Path) -> None:
+    store = LocalSourcingJobStore(isolated_store)
+    _create_job()
+
+    assert store.path == isolated_store
+    assert isolated_store.exists()
+    assert ".runtime" not in str(isolated_store)
+
+
+def test_store_rejects_cookie_field_in_request() -> None:
+    """Test that store rejects requests with cookie fields."""
+    request = _RequestStub({CORRELATION_ID_HEADER: "cookie-test"})
+
+    response = create_sourcing_job(
+        {**_fixture_request(), "cookie": "session-id=abc123"},
+        request,
+        Response(),
+    )
+
+    assert isinstance(response, JSONResponse)
+    body = json.loads(response.body)
+    assert response.status_code == 422
+    assert body["error"]["code"] == "validation-failed"
+    assert body["error"]["details"] == [{"kind": "field", "field": "body", "issue": "unsupported"}]
+
+
+def test_store_rejects_session_field_in_request() -> None:
+    """Test that store rejects requests with session fields."""
+    request = _RequestStub({CORRELATION_ID_HEADER: "session-test"})
+
+    response = create_sourcing_job(
+        {**_fixture_request(), "session": {"id": "sess-123"}},
+        request,
+        Response(),
+    )
+
+    assert isinstance(response, JSONResponse)
+    body = json.loads(response.body)
+    assert response.status_code == 422
+    assert body["error"]["code"] == "validation-failed"
+
+
+def test_store_rejects_token_field_in_request() -> None:
+    """Test that store rejects requests with token fields."""
+    request = _RequestStub({CORRELATION_ID_HEADER: "token-test"})
+
+    response = create_sourcing_job(
+        {**_fixture_request(), "token": "bearer-token-123"},
+        request,
+        Response(),
+    )
+
+    assert isinstance(response, JSONResponse)
+    body = json.loads(response.body)
+    assert response.status_code == 422
+    assert body["error"]["code"] == "validation-failed"
+
+
+def test_store_rejects_password_field_in_request() -> None:
+    """Test that store rejects requests with password fields."""
+    request = _RequestStub({CORRELATION_ID_HEADER: "password-test"})
+
+    response = create_sourcing_job(
+        {**_fixture_request(), "password": "secret123"},
+        request,
+        Response(),
+    )
+
+    assert isinstance(response, JSONResponse)
+    body = json.loads(response.body)
+    assert response.status_code == 422
+    assert body["error"]["code"] == "validation-failed"
+
+
+def test_store_rejects_access_token_field_in_request() -> None:
+    """Test that store rejects requests with accessToken fields."""
+    request = _RequestStub({CORRELATION_ID_HEADER: "accesstoken-test"})
+
+    response = create_sourcing_job(
+        {**_fixture_request(), "accessToken": "token-abc123"},
+        request,
+        Response(),
+    )
+
+    assert isinstance(response, JSONResponse)
+    body = json.loads(response.body)
+    assert response.status_code == 422
+    assert body["error"]["code"] == "validation-failed"
 
 
 def _create_job() -> None:

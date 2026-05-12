@@ -111,3 +111,53 @@ Every WBS-20 validation command passed on the final planning/evidence slice:
 Revert the WBS-20 policy evidence, boundary, phase gate, command queue, compact
 command queue JSON, manifest, and `PLANS.md` changes to restore the pre-WBS-20
 planning state.
+
+## WBS-21 Local Persisted Store Evidence
+
+WBS-21 implements the first local runtime persistence boundary. The persisted
+store is local-only and records only non-secret sourcing job metadata plus
+deterministic fixture/core result references. It preserves the WBS-15
+fixture-only API behavior and keeps synthetic/sanitized fixtures as the current
+collector evidence source.
+
+Persisted fields:
+
+- `job_id`
+- `status`
+- `source_type`
+- `fixture_id`
+- `created_at`
+- `updated_at`
+- `result_summary`
+- `error_code`
+- `error_message`
+
+Forbidden persisted fields:
+
+- `cookie`
+- `session`
+- `token`
+- `secret`
+- `password`
+- `credential`
+- `authorization`
+- `localStorage`
+- `browserStorage`
+- marketplace account identifiers
+- real external URLs beyond reserved fixture/synthetic URLs
+
+Every WBS-21 validation command passed on the final local persisted store slice:
+
+| Command | Status |
+| --- | --- |
+| `cd apps/api && pytest` | PASS |
+| `python -S tools/codex/codex_skillset_generator.py validate-planning --root .` | PASS |
+| `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .` | PASS |
+| `node tools/checks/cleanroom-audit.mjs` | PASS |
+| `pnpm validate:all` | PASS |
+| `git diff --check` | PASS |
+
+WBS-21 does not add live crawling, marketplace access, external API calls,
+browser automation, login automation, or credential/session/cookie/token
+handling. Test cleanup uses an isolated `AUTOMETA_JOB_STORE_PATH` temp file and
+`reset_store_for_tests()`.
