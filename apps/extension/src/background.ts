@@ -2,9 +2,9 @@ type ContractSchemaVersion = "2026-05-07.wbs-12";
 type CorrelationId = string;
 type RequestId = string;
 type JobId = string;
-type PipelineStage = "queued" | "completed" | "cancelled";
-type JobLifecycleState = "queued" | "completed" | "cancelled";
-type ApiErrorCode = "bad-request" | "forbidden" | "validation-failed";
+type PipelineStage = "queued" | "running" | "completed" | "failed" | "cancelled";
+type JobLifecycleState = "queued" | "running" | "completed" | "failed" | "cancelled";
+type ApiErrorCode = "bad-request" | "forbidden" | "conflict" | "validation-failed";
 
 type ErrorEnvelope = {
   readonly kind: "error-envelope";
@@ -57,6 +57,8 @@ type PipelineProgressEvent = {
 export const SOURCING_JOB_READY_CHECK = "autometa.sourcing.job.ready.check" as const;
 export const SOURCING_JOB_FIXTURE_REQUEST = "autometa.sourcing.job.fixture.request" as const;
 export const SOURCING_JOB_STATUS_QUERY = "autometa.sourcing.job.status.query" as const;
+export const SOURCING_JOB_CANCEL_REQUEST = "autometa.sourcing.job.cancel.request" as const;
+export const SOURCING_JOB_RETRY_REQUEST = "autometa.sourcing.job.retry.request" as const;
 
 const contractSchemaVersion: ContractSchemaVersion = "2026-05-07.wbs-12";
 const scaffoldTimestamp = "2026-05-07T00:00:00.000Z";
@@ -128,6 +130,23 @@ type ExtensionSourcingJobStatusQuery = {
   readonly type: typeof SOURCING_JOB_STATUS_QUERY;
   readonly payload: {
     readonly jobId: JobId;
+    readonly status?: JobLifecycleState;
+  };
+};
+
+type ExtensionSourcingJobCancelRequest = {
+  readonly type: typeof SOURCING_JOB_CANCEL_REQUEST;
+  readonly payload: {
+    readonly jobId: JobId;
+    readonly status: JobLifecycleState;
+  };
+};
+
+type ExtensionSourcingJobRetryRequest = {
+  readonly type: typeof SOURCING_JOB_RETRY_REQUEST;
+  readonly payload: {
+    readonly jobId: JobId;
+    readonly status: JobLifecycleState;
   };
 };
 
@@ -137,7 +156,9 @@ type AllowedScaffoldCommand =
   | CancelCommand
   | ExtensionSourcingJobReadinessRequest
   | ExtensionSourcingJobFixtureRequest
-  | ExtensionSourcingJobStatusQuery;
+  | ExtensionSourcingJobStatusQuery
+  | ExtensionSourcingJobCancelRequest
+  | ExtensionSourcingJobRetryRequest;
 
 type BoundaryRequest = {
   readonly kind: "autometa.extension.request";
@@ -179,6 +200,8 @@ export type ExtensionSourcingJobReadinessResponse = {
   readonly apiBoundary: {
     readonly createRoute: "POST /api/v1/sourcing/jobs";
     readonly statusRoute: "GET /api/v1/sourcing/jobs/{job_id}";
+    readonly cancelRoute: "POST /api/v1/sourcing/jobs/{job_id}/cancel";
+    readonly retryRoute: "POST /api/v1/sourcing/jobs/{job_id}/retry";
     readonly resultRoute: "GET /api/v1/sourcing/jobs/{job_id}/result";
   };
   readonly resultSummary: {
@@ -205,13 +228,40 @@ export type ExtensionUnsupportedLiveSourceResponse = {
 type FixtureStatusReadiness = {
   readonly kind: "extension-sourcing-job-status";
   readonly jobId: JobId;
-  readonly status: "completed";
+  readonly status: JobLifecycleState;
   readonly progress: {
-    readonly completedUnits: 8;
+    readonly completedUnits: 0 | 1 | 8;
     readonly totalUnits: 8;
     readonly updatedAt: typeof fixtureCompletedAt;
   };
+  readonly apiBoundary: LocalApiBoundary;
+  readonly cancellable: boolean;
+  readonly retryable: boolean;
   readonly note: "fixture-status-ready-no-live-access";
+};
+
+type LocalApiBoundary = {
+  readonly createRoute: "POST /api/v1/sourcing/jobs";
+  readonly statusRoute: "GET /api/v1/sourcing/jobs/{job_id}";
+  readonly cancelRoute: "POST /api/v1/sourcing/jobs/{job_id}/cancel";
+  readonly retryRoute: "POST /api/v1/sourcing/jobs/{job_id}/retry";
+  readonly resultRoute: "GET /api/v1/sourcing/jobs/{job_id}/result";
+};
+
+type ExtensionLocalApiLifecycleReadinessResponse = {
+  readonly kind: "extension-local-api-lifecycle-readiness";
+  readonly action: "cancel" | "retry";
+  readonly allowed: true;
+  readonly ready: true;
+  readonly jobId: JobId;
+  readonly status: JobLifecycleState;
+  readonly apiBoundary: LocalApiBoundary;
+  readonly transition:
+    | "queued-to-cancelled"
+    | "running-to-cancelled"
+    | "failed-to-queued"
+    | "cancelled-to-queued";
+  readonly note: "local-api-boundary-ready-no-browser-data";
 };
 
 type BoundaryData =
@@ -219,7 +269,8 @@ type BoundaryData =
   | ProgressReadiness
   | CancelReadiness
   | ExtensionSourcingJobReadinessResponse
-  | FixtureStatusReadiness;
+  | FixtureStatusReadiness
+  | ExtensionLocalApiLifecycleReadinessResponse;
 
 type BoundaryResponse =
   | {
@@ -250,6 +301,60 @@ function isNonEmptyString(value: unknown): value is string {
 function getString(record: Readonly<Record<string, unknown>>, key: string): string | undefined {
   const value = record[key];
   return isNonEmptyString(value) ? value : undefined;
+}
+
+function isLifecycleStatus(value: unknown): value is JobLifecycleState {
+  return value === "queued" || value === "running" || value === "completed" || value === "failed" || value === "cancelled";
+}
+
+function isCancellableStatus(value: JobLifecycleState): boolean {
+  return value === "queued" || value === "running";
+}
+
+function isRetryableStatus(value: JobLifecycleState): boolean {
+  return value === "failed" || value === "cancelled";
+}
+
+function normalizedFieldName(key: string): string {
+  return key.replace(/[-_]/g, "").toLowerCase();
+}
+
+function hasPrivateBrowserMaterialField(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some(hasPrivateBrowserMaterialField);
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    const normalized = normalizedFieldName(key);
+    if (
+      normalized === "cookie" ||
+      normalized === "cookies" ||
+      normalized === "session" ||
+      normalized === "sessionref" ||
+      normalized === "sessionmaterial" ||
+      normalized === "token" ||
+      normalized === "accesstoken" ||
+      normalized === "refreshtoken" ||
+      normalized === "credential" ||
+      normalized === "credentials" ||
+      normalized === "password" ||
+      normalized === "authorization" ||
+      normalized === "localstorage" ||
+      normalized === "browserstorage"
+    ) {
+      return true;
+    }
+
+    if (hasPrivateBrowserMaterialField(child)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function errorEnvelope(
@@ -296,6 +401,23 @@ function parseJobIdPayload(value: unknown): { readonly jobId: JobId } | undefine
 
   const jobId = getString(value, "jobId");
   return jobId === undefined ? undefined : { jobId };
+}
+
+function parseLifecyclePayload(
+  value: unknown,
+  options: { readonly requireStatus: boolean },
+): { readonly jobId: JobId; readonly status?: JobLifecycleState } | undefined {
+  const parsed = parseJobIdPayload(value);
+  if (parsed === undefined || !isRecord(value)) {
+    return undefined;
+  }
+
+  const status = value.status;
+  if (status === undefined) {
+    return options.requireStatus ? undefined : parsed;
+  }
+
+  return isLifecycleStatus(status) ? { ...parsed, status } : undefined;
 }
 
 function parseFixtureSourcePayload(value: unknown): { readonly sourceType: "fixture"; readonly jobId?: JobId } | undefined {
@@ -357,8 +479,18 @@ function parseAllowedCommand(value: unknown): AllowedScaffoldCommand | undefined
   }
 
   if (type === SOURCING_JOB_STATUS_QUERY) {
-    const payload = parseJobIdPayload(value.payload);
+    const payload = parseLifecyclePayload(value.payload, { requireStatus: false });
     return payload === undefined ? undefined : { type, payload };
+  }
+
+  if (type === SOURCING_JOB_CANCEL_REQUEST) {
+    const payload = parseLifecyclePayload(value.payload, { requireStatus: true });
+    return payload === undefined ? undefined : { type, payload: payload as ExtensionSourcingJobCancelRequest["payload"] };
+  }
+
+  if (type === SOURCING_JOB_RETRY_REQUEST) {
+    const payload = parseLifecyclePayload(value.payload, { requireStatus: true });
+    return payload === undefined ? undefined : { type, payload: payload as ExtensionSourcingJobRetryRequest["payload"] };
   }
 
   return undefined;
@@ -391,6 +523,15 @@ function parseBoundaryRequest(message: unknown): BoundaryRequest | BoundaryRespo
 
   const sentAt = getString(message, "sentAt");
   const rawCommand = isRecord(message.message) ? message.message : undefined;
+  if (rawCommand !== undefined && hasPrivateBrowserMaterialField(rawCommand.payload)) {
+    return errorResponse(
+      requestId,
+      correlationId,
+      "validation-failed",
+      "Private browser material is not accepted by the extension boundary.",
+    );
+  }
+
   if (
     rawCommand !== undefined &&
     (rawCommand.type === SOURCING_JOB_READY_CHECK || rawCommand.type === SOURCING_JOB_FIXTURE_REQUEST) &&
@@ -468,6 +609,16 @@ function scaffoldProgress(jobId: JobId, correlationId: CorrelationId): PipelineP
   };
 }
 
+function localApiBoundary(): LocalApiBoundary {
+  return {
+    createRoute: "POST /api/v1/sourcing/jobs",
+    statusRoute: "GET /api/v1/sourcing/jobs/{job_id}",
+    cancelRoute: "POST /api/v1/sourcing/jobs/{job_id}/cancel",
+    retryRoute: "POST /api/v1/sourcing/jobs/{job_id}/retry",
+    resultRoute: "GET /api/v1/sourcing/jobs/{job_id}/result",
+  };
+}
+
 function fixtureReadiness(jobId: JobId): ExtensionSourcingJobReadinessResponse {
   return {
     kind: "extension-sourcing-job-readiness",
@@ -476,11 +627,7 @@ function fixtureReadiness(jobId: JobId): ExtensionSourcingJobReadinessResponse {
     sourceType: "fixture",
     jobId,
     status: "completed",
-    apiBoundary: {
-      createRoute: "POST /api/v1/sourcing/jobs",
-      statusRoute: "GET /api/v1/sourcing/jobs/{job_id}",
-      resultRoute: "GET /api/v1/sourcing/jobs/{job_id}/result",
-    },
+    apiBoundary: localApiBoundary(),
     resultSummary: {
       kind: "sourcing-job-result-summary",
       jobId,
@@ -495,17 +642,56 @@ function fixtureReadiness(jobId: JobId): ExtensionSourcingJobReadinessResponse {
   };
 }
 
-function fixtureStatus(jobId: JobId): FixtureStatusReadiness {
+function progressUnits(status: JobLifecycleState): 0 | 1 | 8 {
+  if (status === "queued") {
+    return 0;
+  }
+
+  return status === "running" ? 1 : 8;
+}
+
+function fixtureStatus(jobId: JobId, status: JobLifecycleState = "completed"): FixtureStatusReadiness {
   return {
     kind: "extension-sourcing-job-status",
     jobId,
-    status: "completed",
+    status,
     progress: {
-      completedUnits: 8,
+      completedUnits: progressUnits(status),
       totalUnits: 8,
       updatedAt: fixtureCompletedAt,
     },
+    apiBoundary: localApiBoundary(),
+    cancellable: isCancellableStatus(status),
+    retryable: isRetryableStatus(status),
     note: "fixture-status-ready-no-live-access",
+  };
+}
+
+function lifecycleReadiness(
+  action: ExtensionLocalApiLifecycleReadinessResponse["action"],
+  jobId: JobId,
+  fromStatus: JobLifecycleState,
+): ExtensionLocalApiLifecycleReadinessResponse {
+  const status = action === "cancel" ? "cancelled" : "queued";
+  const transition =
+    action === "cancel"
+      ? fromStatus === "running"
+        ? "running-to-cancelled"
+        : "queued-to-cancelled"
+      : fromStatus === "cancelled"
+        ? "cancelled-to-queued"
+        : "failed-to-queued";
+
+  return {
+    kind: "extension-local-api-lifecycle-readiness",
+    action,
+    allowed: true,
+    ready: true,
+    jobId,
+    status,
+    apiBoundary: localApiBoundary(),
+    transition,
+    note: "local-api-boundary-ready-no-browser-data",
   };
 }
 
@@ -547,7 +733,39 @@ function handleAllowedRequest(request: BoundaryRequest): BoundaryResponse {
   if (request.message.type === SOURCING_JOB_STATUS_QUERY) {
     return {
       ...base,
-      data: fixtureStatus(request.message.payload.jobId),
+      data: fixtureStatus(request.message.payload.jobId, request.message.payload.status),
+    };
+  }
+
+  if (request.message.type === SOURCING_JOB_CANCEL_REQUEST) {
+    if (!isCancellableStatus(request.message.payload.status)) {
+      return errorResponse(
+        request.requestId,
+        request.correlationId,
+        "conflict",
+        "Requested local API lifecycle transition is not allowed.",
+      );
+    }
+
+    return {
+      ...base,
+      data: lifecycleReadiness("cancel", request.message.payload.jobId, request.message.payload.status),
+    };
+  }
+
+  if (request.message.type === SOURCING_JOB_RETRY_REQUEST) {
+    if (!isRetryableStatus(request.message.payload.status)) {
+      return errorResponse(
+        request.requestId,
+        request.correlationId,
+        "conflict",
+        "Requested local API lifecycle transition is not allowed.",
+      );
+    }
+
+    return {
+      ...base,
+      data: lifecycleReadiness("retry", request.message.payload.jobId, request.message.payload.status),
     };
   }
 

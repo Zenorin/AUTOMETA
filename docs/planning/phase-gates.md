@@ -359,3 +359,26 @@ slice must show:
 This slice does not add marketplace access, live crawling, external API calls
 outside the local API boundary, browser automation, login automation, or
 credential/session/cookie/token handling.
+
+## WBS-24 Extension Local API Readiness Evidence
+
+WBS-24 is complete when extension readiness messages align with the WBS-22
+local API lifecycle and all validation commands pass. The completed
+extension-local-api-readiness slice must show:
+
+- Existing fixture readiness and unsupported-message behavior is preserved.
+- Readiness responses include local API create, status, cancel, retry, and
+  result route vocabulary.
+- Status readiness covers queued, running, completed, failed, and cancelled
+  states.
+- Cancel readiness is allowed only for queued/running local jobs.
+- Retry readiness is allowed only for failed/cancelled local jobs.
+- Completed job cancel/retry attempts return typed conflict errors.
+- Unsupported live/external sources and private browser-material fields are
+  rejected.
+- The content script remains inert and does not access page, storage, or
+  network state.
+
+This slice does not add marketplace access, live crawling, external API calls,
+browser automation, login automation, or credential/session/cookie/token
+handling.

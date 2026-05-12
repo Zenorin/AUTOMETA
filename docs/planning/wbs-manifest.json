@@ -1261,15 +1261,19 @@
         "apps/extension/src/content.ts",
         "apps/extension/test/*.test.mjs",
         "docs/contracts/extension-message-contracts.md",
+        "docs/evidence/local-runtime-policy.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
         "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
         "pnpm --filter extension typecheck",
         "pnpm --filter extension build",
         "pnpm --filter extension test",
-        "cd apps/api && pytest",
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
         "pnpm validate:all",
         "git diff --check"
       ],
@@ -1278,7 +1282,49 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, extension local API readiness summary, content-script boundary evidence, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Connected extension readiness messages to the WBS-22/WBS-23 local API lifecycle boundary while keeping the content script inert.",
+        "changed_files": [
+          "apps/extension/src/background.ts",
+          "apps/extension/src/content.ts",
+          "apps/extension/test/sourcing-readiness.test.mjs",
+          "docs/contracts/extension-message-contracts.md",
+          "docs/evidence/local-runtime-policy.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "extension_lifecycle": [
+          "Readiness responses include local API create, status, cancel, retry, and result route vocabulary.",
+          "Status readiness covers queued, running, completed, failed, and cancelled local job states.",
+          "Cancel readiness is allowed only for queued/running states.",
+          "Retry readiness is allowed only for failed/cancelled states.",
+          "Completed job cancel/retry attempts return typed conflict errors.",
+          "Unsupported live/external sources and private browser-material fields are rejected."
+        ],
+        "content_boundary": [
+          "Content script remains an inert local API readiness marker.",
+          "No page, storage, or network access is used by the content script."
+        ],
+        "validation": [
+          "pnpm --filter extension typecheck PASS",
+          "pnpm --filter extension build PASS",
+          "pnpm --filter extension test PASS / 14 passed",
+          "python -S tools/codex/codex_skillset_generator.py validate-planning --root . PASS",
+          "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root . PASS",
+          "node tools/checks/cleanroom-audit.mjs PASS",
+          "pnpm validate:all PASS",
+          "git diff --check PASS"
+        ],
+        "risks": [
+          "Extension messages describe local API readiness and do not call the API directly; direct extension-to-API transport remains deferred.",
+          "Full browser smoke remains deferred.",
+          "The WBS-05 ASGI/TestClient deferred-smoke risk remains preserved."
+        ],
+        "rollback": "Revert the WBS-24 extension message boundary, content-script marker, extension tests, extension message contract docs, local-runtime evidence, phase gate, command queue, and manifest changes to restore the WBS-23 state."
+      }
     },
     {
       "id": "WBS-25",

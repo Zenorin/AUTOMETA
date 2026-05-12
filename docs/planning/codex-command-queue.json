@@ -381,9 +381,9 @@
         "pnpm --filter extension typecheck",
         "pnpm --filter extension build",
         "pnpm --filter extension test",
-        "cd apps/api && pytest",
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
         "pnpm validate:all",
         "git diff --check"
       ]

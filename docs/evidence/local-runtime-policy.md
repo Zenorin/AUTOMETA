@@ -262,3 +262,50 @@ Remaining risks:
 Rollback note: revert the WBS-23 web lifecycle UI, web tests, API contract
 documentation, local-runtime evidence, phase gate, command queue, and manifest
 changes to restore the WBS-22 local API lifecycle state.
+
+## WBS-24 Extension Local API Readiness Evidence
+
+WBS-24 extends the extension background message boundary so it can participate
+in the local API lifecycle from WBS-22 and WBS-23. The implemented boundary:
+
+- Reports fixture/local API readiness for create, status, cancel, retry, and
+  deterministic result routes.
+- Reports local status readiness for queued, running, completed, failed, and
+  cancelled job states.
+- Maps cancel readiness only for `queued -> cancelled` and
+  `running -> cancelled`.
+- Maps retry readiness only for `failed -> queued` and `cancelled -> queued`.
+- Rejects completed-job cancel/retry requests with typed `conflict` errors.
+- Rejects unsupported live/external source payloads.
+- Rejects private browser-material payload fields without echoing unsafe keys.
+- Keeps the content script inert with no page, storage, or network access.
+
+WBS-24 does not add marketplace access, live crawling, browser automation,
+login automation, external API calls, credential handling, cookie/session/token
+capture, browser storage access, or secrets.
+
+Every WBS-24 validation command passed on the final extension local API
+readiness slice:
+
+| Command | Status |
+| --- | --- |
+| `pnpm --filter extension typecheck` | PASS |
+| `pnpm --filter extension build` | PASS |
+| `pnpm --filter extension test` | PASS |
+| `python -S tools/codex/codex_skillset_generator.py validate-planning --root .` | PASS |
+| `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .` | PASS |
+| `node tools/checks/cleanroom-audit.mjs` | PASS |
+| `pnpm validate:all` | PASS |
+| `git diff --check` | PASS |
+
+Remaining risks:
+
+- Extension messages describe local API readiness and do not call the API
+  directly; direct extension-to-API transport remains deferred.
+- Full browser smoke remains deferred.
+- The WBS-05 ASGI/TestClient deferred-smoke risk remains preserved.
+
+Rollback note: revert the WBS-24 extension message boundary, content-script
+marker, extension tests, extension message contract docs, local-runtime
+evidence, phase gate, command queue, and manifest changes to restore the WBS-23
+state.

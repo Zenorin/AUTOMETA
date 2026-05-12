@@ -1003,15 +1003,17 @@ Required behavior:
 - Align readiness/status/cancel/retry messages with local API lifecycle vocabulary.
 - Preserve explicit sender trust, requestId/correlationId handling, and typed unsupported errors.
 - Keep content script inert for browser data and page state.
+- Reject private browser-material fields without echoing unsafe keys.
+- Reject completed job cancel/retry attempts with typed conflict errors.
 - Do not read cookies, sessions, tokens, credentials, local storage, browser profiles, account data, or marketplace pages.
 
 Validation commands:
 - `pnpm --filter extension typecheck`
 - `pnpm --filter extension build`
 - `pnpm --filter extension test`
-- `cd apps/api && pytest`
 - `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
 - `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/cleanroom-audit.mjs`
 - `pnpm validate:all`
 - `git diff --check`
 ```
