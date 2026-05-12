@@ -15,10 +15,12 @@ from app.main import (
     _JOB_STORE,
     _load_persisted_store,
     app,
+    cancel_sourcing_job,
     create_sourcing_job,
     get_sourcing_job,
     get_sourcing_job_result,
     health,
+    retry_sourcing_job,
     update_job_status,
 )
 
@@ -81,6 +83,106 @@ def test_get_job_status() -> None:
     assert body["data"]["resultSummary"]["itemCount"] == 2
     assert body["data"]["resultSummary"]["failureCount"] == 2
     assert len(body["data"]["errors"]) == 2
+
+
+def test_cancel_queued_job_updates_persisted_status() -> None:
+    _create_job()
+    queued = update_job_status(FIXTURE_JOB_ID, "queued")
+    assert queued is not None
+
+    request = _RequestStub({CORRELATION_ID_HEADER: "cancel-correlation"})
+    response = Response()
+
+    body = cancel_sourcing_job(FIXTURE_JOB_ID, request, response)
+
+    assert not isinstance(body, JSONResponse)
+    assert body["ok"] is True
+    assert body["data"]["status"] == "cancelled"
+    assert body["data"]["cancel"]["status"] == "cancelled"
+    assert body["data"]["retry"]["status"] == "retryable"
+    assert response.headers[CORRELATION_ID_HEADER] == "cancel-correlation"
+
+    _JOB_STORE.clear()
+    _load_persisted_store()
+    assert _JOB_STORE[FIXTURE_JOB_ID]["job"]["status"] == "cancelled"
+
+
+def test_cancel_completed_job_is_rejected() -> None:
+    _create_job()
+
+    response = cancel_sourcing_job(
+        FIXTURE_JOB_ID,
+        _RequestStub({CORRELATION_ID_HEADER: "cancel-completed"}),
+        Response(),
+    )
+
+    assert isinstance(response, JSONResponse)
+    body = json.loads(response.body)
+    assert response.status_code == 409
+    assert body["ok"] is False
+    assert body["error"]["code"] == "conflict"
+    assert body["error"]["details"] == [{"kind": "field", "field": "status", "issue": "unsupported"}]
+
+
+def test_retry_failed_job_returns_queued_local_job() -> None:
+    _create_job()
+    failed = update_job_status(
+        FIXTURE_JOB_ID,
+        "failed",
+        error_code="local-fixture-failed",
+        error_message="Synthetic local failure.",
+    )
+    assert failed is not None
+
+    body = retry_sourcing_job(
+        FIXTURE_JOB_ID,
+        _RequestStub({CORRELATION_ID_HEADER: "retry-correlation"}),
+        Response(),
+    )
+
+    assert not isinstance(body, JSONResponse)
+    assert body["ok"] is True
+    assert body["data"]["status"] == "queued"
+    assert body["data"]["progress"]["stage"] == "queued"
+    assert body["data"]["retry"]["status"] == "scheduled"
+    assert body["data"]["errors"] == []
+
+    _JOB_STORE.clear()
+    _load_persisted_store()
+    assert _JOB_STORE[FIXTURE_JOB_ID]["job"]["status"] == "queued"
+
+
+def test_retry_completed_job_is_rejected() -> None:
+    _create_job()
+
+    response = retry_sourcing_job(
+        FIXTURE_JOB_ID,
+        _RequestStub({CORRELATION_ID_HEADER: "retry-completed"}),
+        Response(),
+    )
+
+    assert isinstance(response, JSONResponse)
+    body = json.loads(response.body)
+    assert response.status_code == 409
+    assert body["ok"] is False
+    assert body["error"]["code"] == "conflict"
+    assert body["error"]["details"] == [{"kind": "field", "field": "status", "issue": "unsupported"}]
+
+
+def test_lifecycle_action_invalid_job_id_returns_typed_error_envelope() -> None:
+    request = _RequestStub({CORRELATION_ID_HEADER: "missing-lifecycle"})
+
+    for response in (
+        cancel_sourcing_job("missing-job", request, Response()),
+        retry_sourcing_job("missing-job", request, Response()),
+    ):
+        assert isinstance(response, JSONResponse)
+        body = json.loads(response.body)
+        assert response.status_code == 404
+        assert body["kind"] == "api-response"
+        assert body["ok"] is False
+        assert body["error"]["code"] == "not-found"
+        assert body["error"]["details"] == [{"kind": "field", "field": "job_id", "issue": "invalid"}]
 
 
 def test_get_job_result_returns_deterministic_core_output() -> None:

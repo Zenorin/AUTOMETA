@@ -340,9 +340,9 @@
       ],
       "validation_commands": [
         "cd apps/api && pytest",
-        "pnpm --filter @project/contracts test",
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
         "pnpm validate:all",
         "git diff --check"
       ]

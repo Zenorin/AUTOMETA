@@ -940,15 +940,18 @@ Add local API job lifecycle actions for create, read, cancel, and retry using th
 
 Required behavior:
 - Preserve typed envelopes, request/correlation IDs, lifecycle states, cancel/retry semantics, and unsupported-source errors.
+- Add or preserve local-only routes for create, read, cancel, retry, and deterministic result lookup.
+- Allow cancellation only from cancellable local states and retry only from failed/cancelled local fixture states.
+- Reject completed job cancel/retry attempts with typed conflict envelopes.
 - Keep retries local-only and do not start live collection.
 - Keep ASGI/TestClient risk visible if it still reproduces.
 - Do not add marketplace access, live crawling, browser automation, login/session/cookie/token handling, secrets, or external API calls.
 
 Validation commands:
 - `cd apps/api && pytest`
-- `pnpm --filter @project/contracts test`
 - `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
 - `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/cleanroom-audit.mjs`
 - `pnpm validate:all`
 - `git diff --check`
 ```

@@ -313,3 +313,28 @@ local-job-store slice must show:
 
 This slice does not add live crawling, marketplace access, external API calls,
 browser automation, login automation, or credential/session handling.
+
+## WBS-22 Local API Lifecycle Evidence
+
+WBS-22 is complete when the API exposes local-only create, read, cancel, retry,
+and result lifecycle actions using the WBS-21 persisted store and all
+validation commands pass. The completed api-job-lifecycle slice must show:
+
+- Create persists fixture-backed local jobs.
+- Read returns the current persisted status through typed API envelopes.
+- Cancel accepts only `queued` or `running` local fixture-backed jobs and
+  rejects `completed` jobs with typed `conflict` envelopes.
+- Retry accepts only `failed` or `cancelled` local fixture-backed jobs and
+  rejects `completed` jobs with typed `conflict` envelopes.
+- Invalid job IDs return typed `not-found` envelopes.
+- Persisted state survives reload and exposes no cookie, session, token,
+  credential, password, browser storage, marketplace account, or secret fields.
+- Existing WBS-15 and WBS-21 API tests remain passing.
+
+Status transitions are `queued -> cancelled`, `running -> cancelled`,
+`failed -> queued`, and `cancelled -> queued`. `completed` remains not
+cancellable and not retryable.
+
+This slice does not add live crawling, marketplace access, external API calls,
+browser automation, login automation, or credential/session/cookie/token
+handling.

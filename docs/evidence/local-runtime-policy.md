@@ -161,3 +161,56 @@ WBS-21 does not add live crawling, marketplace access, external API calls,
 browser automation, login automation, or credential/session/cookie/token
 handling. Test cleanup uses an isolated `AUTOMETA_JOB_STORE_PATH` temp file and
 `reset_store_for_tests()`.
+
+## WBS-22 Local API Lifecycle Evidence
+
+WBS-22 expands the local-only API lifecycle actions on top of the WBS-21
+persisted store. The implemented route boundary is:
+
+- `POST /api/v1/sourcing/jobs`: create a persisted fixture-backed job.
+- `GET /api/v1/sourcing/jobs/{job_id}`: read current persisted job status.
+- `POST /api/v1/sourcing/jobs/{job_id}/cancel`: cancel queued or running local
+  fixture-backed jobs only.
+- `POST /api/v1/sourcing/jobs/{job_id}/retry`: retry failed or cancelled local
+  fixture-backed jobs only by returning them to `queued`.
+- `GET /api/v1/sourcing/jobs/{job_id}/result`: preserve deterministic
+  fixture/core result output.
+
+Status transitions:
+
+- `queued -> cancelled`
+- `running -> cancelled`
+- `failed -> queued`
+- `cancelled -> queued`
+- `completed` remains not cancellable and not retryable
+
+The lifecycle actions use typed API envelopes for success, `not-found` invalid
+job IDs, and `conflict` unsupported status transitions. Persisted state remains
+limited to non-secret job metadata, fixture IDs, timestamps, result summaries,
+status, and typed error metadata.
+
+WBS-22 does not add live crawling, marketplace access, external API calls,
+browser automation, login automation, credential handling, cookie/session/token
+capture, browser storage access, or secrets.
+
+Every WBS-22 validation command passed on the final local API lifecycle slice:
+
+| Command | Status |
+| --- | --- |
+| `cd apps/api && pytest` | PASS |
+| `python -S tools/codex/codex_skillset_generator.py validate-planning --root .` | PASS |
+| `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .` | PASS |
+| `node tools/checks/cleanroom-audit.mjs` | PASS |
+| `pnpm validate:all` | PASS |
+| `git diff --check` | PASS |
+
+Remaining risks:
+
+- The persisted store is still a local JSON store; concurrent writes,
+  migrations, and production-grade locking remain deferred.
+- Web and extension runtime wiring remains deferred to WBS-23 and WBS-24.
+- The WBS-05 ASGI/TestClient deferred-smoke risk remains preserved.
+
+Rollback note: revert the WBS-22 API lifecycle routes/helpers, lifecycle tests,
+API contract documentation, local-runtime evidence, phase gate, command queue,
+and manifest changes to restore the WBS-21 local persisted store state.

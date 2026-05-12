@@ -162,6 +162,8 @@ FORBIDDEN_NORMALIZED_FIELD_NAMES = {
     "token",
 }
 STORE_VERSION = "2026-05-12.wbs-21"
+CANCELLABLE_JOB_STATUSES = {"queued", "running"}
+RETRYABLE_JOB_STATUSES = {"failed", "cancelled"}
 
 _JOB_STORE: dict[str, JobRecord] = {}
 _FIXTURE_SET_CACHE: dict[str, Any] | None = None
@@ -387,25 +389,20 @@ class LocalSourcingJobStore:
         *,
         error_code: str | None = None,
         error_message: str | None = None,
+        retry_scheduled: bool = False,
     ) -> JobRecord | None:
         global _JOB_STORE
         record = self.get_job(job_id)
         if record is None:
             return None
 
-        record["job"]["status"] = status_value
-        record["job"]["updatedAt"] = FIXTURE_COMPLETED_AT
-        record["job"]["resultSummary"]["status"] = status_value
-        if error_code or error_message:
-            record["job"]["errors"] = [
-                {
-                    "kind": "sourcing-job-error",
-                    "reason": error_code or "unknown",
-                    "message": error_message or "Local job status update recorded.",
-                    "retryable": False,
-                    "occurredAt": FIXTURE_COMPLETED_AT,
-                }
-            ]
+        _apply_job_status(
+            record,
+            status_value,
+            error_code=error_code,
+            error_message=error_message,
+            retry_scheduled=retry_scheduled,
+        )
         _JOB_STORE[job_id] = copy.deepcopy(record)
         self.save_jobs(_JOB_STORE)
         return copy.deepcopy(record)
@@ -480,15 +477,128 @@ def _persisted_job_from_record(job_id: str, record: JobRecord) -> PersistedJob:
     return persisted_job
 
 
+def _apply_job_status(
+    record: JobRecord,
+    status_value: str,
+    *,
+    error_code: str | None = None,
+    error_message: str | None = None,
+    retry_scheduled: bool = False,
+) -> JobRecord:
+    job = record["job"]
+    job["status"] = status_value
+    job["updatedAt"] = FIXTURE_COMPLETED_AT
+
+    progress = job.get("progress")
+    if isinstance(progress, dict):
+        progress["stage"] = status_value
+        if status_value == "queued":
+            progress["completedUnits"] = 0
+        elif status_value == "running":
+            progress["completedUnits"] = 1
+        else:
+            progress["completedUnits"] = progress.get("totalUnits", len(CORE_PIPELINE_STAGES))
+        progress["updatedAt"] = FIXTURE_COMPLETED_AT
+
+    result_summary = job.get("resultSummary")
+    if isinstance(result_summary, dict):
+        result_summary["status"] = status_value
+
+    if status_value == "cancelled":
+        job["cancel"] = {
+            "kind": "cancel-state",
+            "status": "cancelled",
+            "cancelledAt": FIXTURE_COMPLETED_AT,
+            "reason": "local-user-request",
+        }
+        job["retry"] = {
+            "kind": "retry-state",
+            "status": "retryable",
+            "reason": "cancelled-local-fixture-job",
+        }
+        job["errors"] = [
+            {
+                "kind": "sourcing-job-error",
+                "reason": error_code or "local-job-cancelled",
+                "message": error_message or "Local fixture-backed job was cancelled.",
+                "retryable": True,
+                "occurredAt": FIXTURE_COMPLETED_AT,
+            }
+        ]
+    elif status_value == "failed":
+        job["cancel"] = {
+            "kind": "cancel-state",
+            "status": "not-cancellable",
+            "reason": "failed",
+        }
+        job["retry"] = {
+            "kind": "retry-state",
+            "status": "retryable",
+            "reason": "failed-local-fixture-job",
+        }
+        job["errors"] = [
+            {
+                "kind": "sourcing-job-error",
+                "reason": error_code or "local-fixture-failed",
+                "message": error_message or "Local fixture-backed job failed deterministically.",
+                "retryable": True,
+                "occurredAt": FIXTURE_COMPLETED_AT,
+            }
+        ]
+    elif retry_scheduled:
+        job["cancel"] = {
+            "kind": "cancel-state",
+            "status": "cancellable",
+            "reason": "local-only-fixture-job",
+        }
+        job["retry"] = {
+            "kind": "retry-state",
+            "status": "scheduled",
+            "scheduledAt": FIXTURE_COMPLETED_AT,
+            "reason": "local-user-request",
+        }
+        job["errors"] = []
+    elif status_value in CANCELLABLE_JOB_STATUSES:
+        job["cancel"] = {
+            "kind": "cancel-state",
+            "status": "cancellable",
+            "reason": "local-only-fixture-job",
+        }
+        job["retry"] = {
+            "kind": "retry-state",
+            "status": "not-retryable",
+            "reason": status_value,
+        }
+        job["errors"] = []
+    elif status_value == "completed":
+        job["cancel"] = {
+            "kind": "cancel-state",
+            "status": "not-cancellable",
+            "reason": "completed",
+        }
+        job["retry"] = {
+            "kind": "retry-state",
+            "status": "not-retryable",
+            "reason": "completed",
+        }
+
+    return record
+
+
 def _record_from_persisted_job(persisted_job: PersistedJob) -> JobRecord:
     correlation_id = "local-runtime-store"
     request_id = FIXTURE_REQUEST_ID
     result = _build_core_pipeline_result(_load_fixture_set(), correlation_id)
     job = _build_job_status(result, correlation_id, request_id)
     status_value = persisted_job.get("status", "completed")
-    job["status"] = status_value
     job["updatedAt"] = persisted_job.get("updated_at", FIXTURE_COMPLETED_AT)
     job["resultSummary"] = copy.deepcopy(persisted_job.get("result_summary", job["resultSummary"]))
+    _apply_job_status(
+        {"job": job, "result": result},
+        status_value,
+        error_code=persisted_job.get("error_code"),
+        error_message=persisted_job.get("error_message"),
+    )
     return {"job": job, "result": result}
 
 
@@ -514,12 +624,14 @@ def update_job_status(
     *,
     error_code: str | None = None,
     error_message: str | None = None,
+    retry_scheduled: bool = False,
 ) -> JobRecord | None:
     return _LOCAL_JOB_STORE.update_job_status(
         job_id,
         status_value,
         error_code=error_code,
         error_message=error_message,
+        retry_scheduled=retry_scheduled,
     )
 
 
@@ -759,6 +871,24 @@ def _job_not_found(job_id: str, correlation_id: str) -> JSONResponse:
     )
 
 
+def _job_lifecycle_conflict(
+    *,
+    job_id: str,
+    action: str,
+    status_value: str,
+    correlation_id: str,
+) -> JSONResponse:
+    return _error_response(
+        status_code=409,
+        code="conflict",
+        message=f"Sourcing job {job_id} cannot be {action} from status {status_value}.",
+        correlation_id=correlation_id,
+        retryable=False,
+        details=[{"kind": "field", "field": "status", "issue": "unsupported"}],
+        emitted_at=FIXTURE_COMPLETED_AT,
+    )
+
+
 @app.get("/health")
 def health(request: Request, response: Response) -> SuccessResponseEnvelope:
     correlation_id = _correlation_id(request)
@@ -804,6 +934,67 @@ def get_sourcing_job(
 
     response.headers[CORRELATION_ID_HEADER] = correlation_id
     return _success_response(copy.deepcopy(record["job"]), correlation_id, FIXTURE_COMPLETED_AT)
+
+
+@app.post("/api/v1/sourcing/jobs/{job_id}/cancel", response_model=None)
+def cancel_sourcing_job(
+    job_id: str,
+    request: Request,
+    response: Response,
+) -> SuccessResponseEnvelope | JSONResponse:
+    correlation_id = _correlation_id(request)
+    record = get_job(job_id)
+    if record is None:
+        return _job_not_found(job_id, correlation_id)
+
+    current_status = str(record["job"].get("status", "unknown"))
+    if current_status not in CANCELLABLE_JOB_STATUSES:
+        return _job_lifecycle_conflict(
+            job_id=job_id,
+            action="cancelled",
+            status_value=current_status,
+            correlation_id=correlation_id,
+        )
+
+    cancelled = update_job_status(
+        job_id,
+        "cancelled",
+        error_code="local-job-cancelled",
+        error_message="Local fixture-backed job was cancelled.",
+    )
+    if cancelled is None:
+        return _job_not_found(job_id, correlation_id)
+
+    response.headers[CORRELATION_ID_HEADER] = correlation_id
+    return _success_response(copy.deepcopy(cancelled["job"]), correlation_id, FIXTURE_COMPLETED_AT)
+
+
+@app.post("/api/v1/sourcing/jobs/{job_id}/retry", response_model=None)
+def retry_sourcing_job(
+    job_id: str,
+    request: Request,
+    response: Response,
+) -> SuccessResponseEnvelope | JSONResponse:
+    correlation_id = _correlation_id(request)
+    record = get_job(job_id)
+    if record is None:
+        return _job_not_found(job_id, correlation_id)
+
+    current_status = str(record["job"].get("status", "unknown"))
+    if current_status not in RETRYABLE_JOB_STATUSES:
+        return _job_lifecycle_conflict(
+            job_id=job_id,
+            action="retried",
+            status_value=current_status,
+            correlation_id=correlation_id,
+        )
+
+    retried = update_job_status(job_id, "queued", retry_scheduled=True)
+    if retried is None:
+        return _job_not_found(job_id, correlation_id)
+
+    response.headers[CORRELATION_ID_HEADER] = correlation_id
+    return _success_response(copy.deepcopy(retried["job"]), correlation_id, FIXTURE_COMPLETED_AT)
 
 
 @app.get("/api/v1/sourcing/jobs/{job_id}/result", response_model=None)

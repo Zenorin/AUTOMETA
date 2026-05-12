@@ -118,6 +118,35 @@ types with typed `validation-failed` envelopes. It does not perform live
 marketplace crawling, browser automation, login/session/cookie/token handling,
 credential handling, external API calls, or secret storage.
 
+### Local-Only Sourcing Job Lifecycle API
+
+WBS-22 expands the API lifecycle boundary using the WBS-21 persisted local job
+store. The routes remain deterministic and fixture-backed:
+
+- `POST /api/v1/sourcing/jobs` creates a persisted fixture-backed job and
+  returns a typed queued creation response.
+- `GET /api/v1/sourcing/jobs/{job_id}` reads the current persisted job status.
+- `POST /api/v1/sourcing/jobs/{job_id}/cancel` cancels only local jobs in
+  `queued` or `running` state.
+- `POST /api/v1/sourcing/jobs/{job_id}/retry` retries only local fixture jobs
+  in `failed` or `cancelled` state by returning them to `queued`.
+- `GET /api/v1/sourcing/jobs/{job_id}/result` preserves the deterministic
+  fixture/core result boundary.
+
+Status transitions are explicit:
+
+- `queued -> cancelled`
+- `running -> cancelled` for local fixture-backed records only
+- `failed -> queued` through retry
+- `cancelled -> queued` through retry
+- `completed` is not cancellable and not retryable
+
+Invalid job IDs return typed `not-found` envelopes. Unsupported lifecycle
+transitions return typed `conflict` envelopes with `status` marked as an
+unsupported field. WBS-22 does not add live crawling, marketplace access,
+external API calls, browser automation, login automation, or
+session/cookie/token/credential handling.
+
 ### Fixture-Only Web Job UI
 
 WBS-16 consumes the WBS-15 API envelope vocabulary in the web shell without

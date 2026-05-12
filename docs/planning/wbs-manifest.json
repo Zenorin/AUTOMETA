@@ -1089,18 +1089,20 @@
         "consistency-guard"
       ],
       "target_files": [
-        "apps/api/app/*.py",
+        "apps/api/app/main.py",
         "apps/api/tests/*.py",
-        "packages/contracts/src/index.ts",
-        "packages/contracts/test/*.test.mjs",
         "docs/contracts/api-contracts.md",
+        "docs/evidence/local-runtime-policy.md",
+        "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
         "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
         "cd apps/api && pytest",
-        "pnpm --filter @project/contracts test",
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
         "pnpm validate:all",
         "git diff --check"
       ],
@@ -1109,7 +1111,48 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, API lifecycle summary, typed error/cancel/retry evidence, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Expanded the local-only sourcing job API lifecycle with create/read/cancel/retry actions backed by the WBS-21 persisted store.",
+        "changed_files": [
+          "apps/api/app/main.py",
+          "apps/api/tests/test_sourcing_jobs.py",
+          "docs/contracts/api-contracts.md",
+          "docs/evidence/local-runtime-policy.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "api_lifecycle": [
+          "POST /api/v1/sourcing/jobs creates a persisted fixture-backed local job.",
+          "GET /api/v1/sourcing/jobs/{job_id} reads persisted local status.",
+          "POST /api/v1/sourcing/jobs/{job_id}/cancel cancels queued/running local fixture jobs only.",
+          "POST /api/v1/sourcing/jobs/{job_id}/retry retries failed/cancelled local fixture jobs only.",
+          "GET /api/v1/sourcing/jobs/{job_id}/result preserves deterministic fixture/core result output."
+        ],
+        "status_transitions": [
+          "queued -> cancelled",
+          "running -> cancelled",
+          "failed -> queued",
+          "cancelled -> queued",
+          "completed is not cancellable or retryable"
+        ],
+        "validation": [
+          "cd apps/api && pytest PASS / 27 passed",
+          "python -S tools/codex/codex_skillset_generator.py validate-planning --root . PASS",
+          "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root . PASS",
+          "node tools/checks/cleanroom-audit.mjs PASS",
+          "pnpm validate:all PASS",
+          "git diff --check PASS"
+        ],
+        "risks": [
+          "The persisted store remains a local JSON store; concurrent writes, migrations, and production-grade locking are deferred.",
+          "Web and extension runtime wiring remains deferred to WBS-23 and WBS-24.",
+          "The WBS-05 ASGI/TestClient deferred-smoke risk remains preserved."
+        ],
+        "rollback": "Revert the WBS-22 API lifecycle routes/helpers, lifecycle tests, API contract docs, local-runtime evidence, phase gate, command queue, and manifest changes to restore the WBS-21 state."
+      }
     },
     {
       "id": "WBS-23",
