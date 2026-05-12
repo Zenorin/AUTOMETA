@@ -971,6 +971,8 @@ Connect web job creation/status UI states to the real local API lifecycle withou
 Required behavior:
 - Wire create/read/cancel/retry UI paths to local API lifecycle responses.
 - Preserve loading, empty, queued, running, completed, failed, cancelled, retry, and unsupported-source states.
+- Show cancel actions only for cancellable local states and retry actions only for failed/cancelled local jobs.
+- Render API error envelopes safely without exposing private implementation details.
 - Keep clean-room/local-only copy visible.
 - Do not add marketplace access, live crawling, browser automation, login/session/cookie/token handling, secrets, or external API calls beyond the local API boundary.
 
@@ -980,6 +982,7 @@ Validation commands:
 - `cd apps/api && pytest`
 - `python -S tools/codex/codex_skillset_generator.py validate-planning --root .`
 - `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .`
+- `node tools/checks/cleanroom-audit.mjs`
 - `pnpm validate:all`
 - `git diff --check`
 ```

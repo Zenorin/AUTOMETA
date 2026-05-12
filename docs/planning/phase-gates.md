@@ -338,3 +338,24 @@ cancellable and not retryable.
 This slice does not add live crawling, marketplace access, external API calls,
 browser automation, login automation, or credential/session/cookie/token
 handling.
+
+## WBS-23 Web Local API Lifecycle Evidence
+
+WBS-23 is complete when the web UI uses the WBS-22 local API lifecycle boundary
+for fixture-backed create, read, cancel, retry, and deterministic result-summary
+display, and all validation commands pass. The completed web-local-api-lifecycle
+slice must show:
+
+- The WBS-16 clean-room shell and fixture-only safety messaging remain visible.
+- Web lifecycle actions use same-origin local API paths only.
+- UI states cover idle, creating, queued, running, completed, cancelled,
+  failed, retrying, API error, and unsupported live-source blocked.
+- Cancel controls appear only for `queued` and `running` states.
+- Retry controls appear only for `failed` and `cancelled` states.
+- Completed jobs cannot be cancelled or retried from the UI.
+- API error envelopes render safe summary copy without leaking internals.
+- Unsupported live/external collection remains visibly blocked.
+
+This slice does not add marketplace access, live crawling, external API calls
+outside the local API boundary, browser automation, login automation, or
+credential/session/cookie/token handling.

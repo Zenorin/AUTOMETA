@@ -147,6 +147,28 @@ unsupported field. WBS-22 does not add live crawling, marketplace access,
 external API calls, browser automation, login automation, or
 session/cookie/token/credential handling.
 
+### Web Local API Lifecycle UI
+
+WBS-23 connects the web sourcing job UI to the WBS-22 local API lifecycle
+boundary. The web UI uses same-origin local API paths only:
+
+- `POST /api/v1/sourcing/jobs` for fixture-backed local job creation.
+- `GET /api/v1/sourcing/jobs/{job_id}` for local job status refresh.
+- `POST /api/v1/sourcing/jobs/{job_id}/cancel` for cancellable local jobs.
+- `POST /api/v1/sourcing/jobs/{job_id}/retry` for failed/cancelled local jobs.
+
+The UI renders typed lifecycle states for idle, creating, queued, running,
+completed, cancelled, failed, retrying, API error, and unsupported live-source
+blocked paths. Result summaries continue to use deterministic fixture/core
+data. Completed jobs do not show cancel or retry actions. Cancellable actions
+are shown only for `queued` and `running`; retry actions are shown only for
+`failed` and `cancelled`.
+
+API error envelopes are rendered with safe summary copy. Unsupported live or
+external collection remains visibly blocked. WBS-23 does not add marketplace
+access, live crawling, browser automation, login automation, external API calls
+outside the local API boundary, or credential/session/cookie/token handling.
+
 ### Fixture-Only Web Job UI
 
 WBS-16 consumes the WBS-15 API envelope vocabulary in the web shell without

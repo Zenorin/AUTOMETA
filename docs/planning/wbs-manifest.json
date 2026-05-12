@@ -1167,10 +1167,14 @@
         "consistency-guard"
       ],
       "target_files": [
-        "apps/web/src/*.tsx",
-        "apps/web/src/*.ts",
+        "apps/web/src/App.tsx",
+        "apps/web/src/styles.css",
         "apps/web/test/*.test.mjs",
+        "docs/contracts/api-contracts.md",
+        "docs/evidence/local-runtime-policy.md",
         "docs/planning/phase-gates.md",
+        "docs/planning/codex-command-queue.md",
+        "docs/planning/codex-command-queue.json",
         "docs/planning/wbs-manifest.json"
       ],
       "validation_commands": [
@@ -1179,6 +1183,7 @@
         "cd apps/api && pytest",
         "python -S tools/codex/codex_skillset_generator.py validate-planning --root .",
         "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .",
+        "node tools/checks/cleanroom-audit.mjs",
         "pnpm validate:all",
         "git diff --check"
       ],
@@ -1187,7 +1192,56 @@
       ],
       "rollback": "Revert this slice and restore prior generated files/backups if validation fails.",
       "evidence": "Record changed files, commands, PASS/FAIL output, web local API lifecycle summary, UI state coverage, remaining risks, and rollback note.",
-      "status": "todo"
+      "status": "done",
+      "completed_evidence": {
+        "summary": "Connected the web sourcing job UI to the WBS-22 local-only API lifecycle while preserving fixture-only safety messaging.",
+        "changed_files": [
+          "apps/web/src/App.tsx",
+          "apps/web/src/styles.css",
+          "apps/web/test/app-shell.test.mjs",
+          "docs/contracts/api-contracts.md",
+          "docs/evidence/local-runtime-policy.md",
+          "docs/planning/phase-gates.md",
+          "docs/planning/codex-command-queue.md",
+          "docs/planning/codex-command-queue.json",
+          "docs/planning/wbs-manifest.json"
+        ],
+        "web_lifecycle": [
+          "Create uses POST /api/v1/sourcing/jobs with the fixture-safe request payload.",
+          "Read uses GET /api/v1/sourcing/jobs/{job_id} for local status refresh.",
+          "Cancel uses POST /api/v1/sourcing/jobs/{job_id}/cancel only for queued/running states.",
+          "Retry uses POST /api/v1/sourcing/jobs/{job_id}/retry only for failed/cancelled states.",
+          "Deterministic fixture/core result summaries remain visible."
+        ],
+        "ui_states": [
+          "idle",
+          "creating",
+          "queued",
+          "running",
+          "completed",
+          "cancelled",
+          "failed",
+          "retrying",
+          "api-error",
+          "unsupported-live-source-blocked"
+        ],
+        "validation": [
+          "pnpm --filter @project/web typecheck PASS",
+          "pnpm --filter @project/web test PASS / 18 passed",
+          "cd apps/api && pytest PASS / 27 passed",
+          "python -S tools/codex/codex_skillset_generator.py validate-planning --root . PASS",
+          "python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root . PASS",
+          "node tools/checks/cleanroom-audit.mjs PASS",
+          "pnpm validate:all PASS",
+          "git diff --check PASS"
+        ],
+        "risks": [
+          "Full browser interaction smoke remains deferred.",
+          "Extension-to-local-API wiring remains deferred to WBS-24.",
+          "The WBS-05 ASGI/TestClient deferred-smoke risk remains preserved."
+        ],
+        "rollback": "Revert the WBS-23 web lifecycle UI, web tests, API contract docs, local-runtime evidence, phase gate, command queue, and manifest changes to restore the WBS-22 state."
+      }
     },
     {
       "id": "WBS-24",

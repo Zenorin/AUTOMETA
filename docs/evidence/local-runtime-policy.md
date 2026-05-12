@@ -214,3 +214,51 @@ Remaining risks:
 Rollback note: revert the WBS-22 API lifecycle routes/helpers, lifecycle tests,
 API contract documentation, local-runtime evidence, phase gate, command queue,
 and manifest changes to restore the WBS-21 local persisted store state.
+
+## WBS-23 Web Local API Lifecycle Evidence
+
+WBS-23 connects the web sourcing job UI to the WBS-22 local API lifecycle using
+same-origin local API paths. The UI preserves the WBS-16 clean-room shell and
+fixture-only safety messaging while adding controls for:
+
+- Creating a local fixture-backed sourcing job.
+- Reading the current local job status.
+- Displaying deterministic fixture/core result summaries.
+- Cancelling eligible `queued` or `running` jobs.
+- Retrying eligible `failed` or `cancelled` jobs.
+- Rendering typed API error envelopes with safe summary copy.
+- Keeping unsupported live/external collection visibly blocked.
+
+UI state coverage includes idle, creating, queued, running, completed,
+cancelled, failed, retrying, API error, and unsupported live source blocked.
+Completed jobs do not expose cancel or retry actions.
+
+WBS-23 does not add marketplace access, live crawling, browser automation,
+login automation, external API calls outside the local API boundary,
+credential handling, cookie/session/token capture, browser storage access, or
+secrets.
+
+Every WBS-23 validation command passed on the final web local API lifecycle
+slice:
+
+| Command | Status |
+| --- | --- |
+| `pnpm --filter @project/web typecheck` | PASS |
+| `pnpm --filter @project/web test` | PASS |
+| `cd apps/api && pytest` | PASS |
+| `python -S tools/codex/codex_skillset_generator.py validate-planning --root .` | PASS |
+| `python -S tools/codex/codex_skillset_generator.py validate-dev-flow --root .` | PASS |
+| `node tools/checks/cleanroom-audit.mjs` | PASS |
+| `pnpm validate:all` | PASS |
+| `git diff --check` | PASS |
+
+Remaining risks:
+
+- The UI calls the local API boundary, but full browser interaction smoke is
+  still deferred.
+- Extension-to-local-API wiring remains deferred to WBS-24.
+- The WBS-05 ASGI/TestClient deferred-smoke risk remains preserved.
+
+Rollback note: revert the WBS-23 web lifecycle UI, web tests, API contract
+documentation, local-runtime evidence, phase gate, command queue, and manifest
+changes to restore the WBS-22 local API lifecycle state.
