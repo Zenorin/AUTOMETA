@@ -219,7 +219,7 @@ h2 {
 
 .job-state-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -250,21 +250,31 @@ h2 {
 }
 
 .job-state--completed,
-.job-state--queued {
+.job-state--queued,
+.job-state--running {
   border-top-color: #19745d;
 }
 
-.job-state--creating {
+.job-state--creating,
+.job-state--retrying {
   border-top-color: #5f6db7;
 }
 
 .job-state--failed,
+.job-state--cancelled,
+.job-state--api-error,
 .job-state--invalid-source-rejected {
   border-top-color: #b4563e;
 }
 
 .job-state--idle {
   border-top-color: #9b6b15;
+}
+
+.job-state--active {
+  outline: 2px solid #19745d;
+  outline-offset: 2px;
+  background: #ffffff;
 }
 
 .job-detail-grid {
@@ -302,6 +312,11 @@ h2 {
 }
 
 .blocked-source {
+  border-color: #d3b8ae;
+  background: #fff9f7;
+}
+
+.api-error-panel {
   border-color: #d3b8ae;
   background: #fff9f7;
 }
